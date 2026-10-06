@@ -62,3 +62,27 @@ Aquí está cada decisión que se aparta de las diapositivas de la asignatura (C
 
 - **Decisión:** la cobertura mínima empieza en el 60 % y se sube en cada sprint. Está en `backend/pyproject.toml` (`fail_under`) y en la configuración de vitest.
 - **Por qué:** al principio casi todo el código es nuevo y cambia mucho. Un mínimo alto desde el primer día empuja a escribir tests vacíos solo para cumplir la cifra.
+
+## D8 · Terraform: un solo estado y excepciones de Checkov
+
+*Octubre 2026*
+
+- **Lo habitual:** un estado y un fichero `.tfvars` por entorno.
+- **Decisión:** hay un solo estado. Lo que es propio de cada entorno (bucket del frontend y CloudFront) es una instancia de `modules/site`, generada a partir de `var.environments`.
+- **Por qué:** staging y producción comparten la EC2, el bucket de fotos, el rol de GitHub y el presupuesto. Con un estado por entorno, estos recursos compartidos tendrían que vivir en un tercer estado y leerse con `terraform_remote_state`. Para dos personas de DevOps es más complejidad que beneficio. Con un solo estado, un `plan` enseña todo el impacto de un cambio.
+- **Excepciones de Checkov** ([`.checkov.yaml`](../infra/terraform/.checkov.yaml)):
+  - WAF, KMS, replicación entre regiones y origin failover cuestan dinero que no cabe en 20 USD/mes.
+  - Los logs de acceso de S3 y CloudFront no los revisaría nadie.
+  - TLS 1.2 mínimo y un certificado propio requieren un dominio, y no tenemos.
+  - Cada excepción tiene su motivo en el fichero. Todo lo demás bloquea el merge.
+
+## D9 · Acceso a AWS con la cuenta root
+
+*Octubre 2026*
+
+- **Lo que dicen las buenas prácticas:** no usar root en el día a día y trabajar con usuarios o roles IAM con MFA.
+- **Decisión:** el equipo trabaja con la cuenta root, que tiene MFA activado.
+- **Mitigación:**
+  - La pipeline nunca usa root: GitHub Actions entra con roles de OIDC de mínimo privilegio y sin claves.
+  - Cada cambio manual se apunta en `infra/README.md`.
+  - Los cambios que pasan por Terraform quedan revisados en la PR.

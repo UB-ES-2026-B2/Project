@@ -1,0 +1,138 @@
+name: Terraform
+
+# En cada PR que toque infra/terraform/: fmt, validate, Checkov y plan.
+# El apply solo se lanza a mano (Run workflow -> apply) desde main y con la
+# aprobación del environment "terraform".
+on:
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - "infra/terraform/**"
+      - ".github/workflows/terraform.yml"
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Aplicar los cambios (solo desde main, requiere aprobación)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  # Nunca dos plan/apply a la vez sobre el mismo estado.
+  group: terraform
+  cancel-in-progress: false
+
+env:
+  TF_IN_AUTOMATION: "true"
+  AWS_REGION: eu-west-1
+
+defaults:
+  run:
+    working-directory: infra/terraform
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.13"
+
+      - name: terraform fmt
+        run: terraform fmt -check -recursive -diff
+
+      - name: terraform validate
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
+
+  checkov:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: infra/terraform
+          config_file: infra/terraform/.checkov.yaml
+          quiet: true
+
+  plan:
+    needs: [validate, checkov]
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.13"
+
+      # Rol de solo lectura (más escritura del lock en el bucket del estado).
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::891377256343:role/es-b2-github-terraform-plan
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: terraform init
+        run: terraform init -input=false
+
+      - name: terraform plan
+        id: plan
+        run: |
+          set -o pipefail
+          terraform plan -input=false -no-color -lock-timeout=120s -out=tfplan | tee plan.txt
+
+      - name: Resumen del plan
+        if: always() && steps.plan.outcome != 'skipped'
+        run: |
+          {
+            echo "### Terraform plan"
+            echo
+            grep -E '^(Plan:|No changes\.|Error)' plan.txt || true
+            echo
+            echo "<details><summary>Plan completo</summary>"
+            echo
+            echo '```'
+            cat plan.txt
+            echo '```'
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  apply:
+    needs: [validate, checkov]
+    if: github.event_name == 'workflow_dispatch' && inputs.apply && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # Required reviewers: DevOps. Deployment branches: solo main.
+    environment: terraform
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.13"
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::891377256343:role/es-b2-github-terraform-apply
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: terraform init
+        run: terraform init -input=false
+
+      - name: terraform plan
+        run: terraform plan -input=false -no-color -lock-timeout=120s -out=tfplan
+
+      - name: terraform apply
+        run: terraform apply -input=false -lock-timeout=120s tfplan

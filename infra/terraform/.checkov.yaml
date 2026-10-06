@@ -1,0 +1,23 @@
+# Excepciones de Checkov. Cada una está justificada (resumen en docs/decisiones.md, D8).
+# Todo lo demás que encuentre Checkov bloquea el merge.
+framework:
+  - terraform
+skip-check:
+  # --- Coste: cada una cuesta dinero o servicios extra que no caben en 20 USD/mes ---
+  - CKV_AWS_68    # CloudFront con WAF (WAF cuesta ~5 USD/mes + reglas)
+  - CKV2_AWS_47   # WAF con la regla de Log4j (depende del WAF)
+  - CKV_AWS_144   # Replicación de S3 en otra región (duplica el almacenamiento)
+  - CKV_AWS_145   # S3 cifrado con KMS (SSE-S3/AES256 ya cifra en reposo; KMS cobra por petición)
+  - CKV_AWS_310   # CloudFront con origin failover (no hay un segundo origen)
+  # --- Logs de acceso: no hay quién los revise; se usan los logs de la app en CloudWatch ---
+  - CKV_AWS_18    # Access logging de S3
+  - CKV_AWS_86    # Access logging de CloudFront
+  # --- Sin dominio propio: se usa el certificado *.cloudfront.net ---
+  - CKV_AWS_174   # TLS 1.2 mínimo (no se puede fijar con el certificado por defecto)
+  - CKV2_AWS_42   # Certificado SSL propio
+  # --- No aplican a este proyecto ---
+  - CKV_AWS_21    # Versionado de S3: el frontend se regenera desde git; copias con caducidad de 30 días
+  - CKV2_AWS_61   # Lifecycle en todos los buckets: solo tiene sentido en el de copias
+  - CKV2_AWS_62   # Notificaciones de eventos de S3: nadie las consume
+  - CKV_AWS_374   # Restricción geográfica en CloudFront: el portal es público
+  - CKV2_AWS_32   # Response headers policy: pendiente (cambio de comportamiento, se hará en su PR)
