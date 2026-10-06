@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Grupo B2</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg1: #0b1020;
+      --bg2: #111b36;
+      --accent: #7cf7d4;
+      --accent-2: #ffd36e;
+      --text: #f4f7fb;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at top, rgba(124, 247, 212, 0.15), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(255, 211, 110, 0.14), transparent 30%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      color: var(--text);
+    }
+
+    .card {
+      position: relative;
+      padding: 3rem 4rem;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 28px;
+      background: rgba(10, 14, 28, 0.55);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+      text-align: center;
+      transform-origin: center;
+      animation: float 3.5s ease-in-out infinite;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      text-shadow: 0 0 18px rgba(124, 247, 212, 0.35);
+    }
+
+    .subtitle {
+      margin-top: 0.85rem;
+      font-size: 1rem;
+      color: rgba(244, 247, 251, 0.8);
+    }
+
+    .blob {
+      position: absolute;
+      inset: auto;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      filter: blur(18px);
+      opacity: 0.55;
+      pointer-events: none;
+      animation: drift 6s ease-in-out infinite;
+    }
+
+    .blob.one {
+      top: 12%;
+      left: 12%;
+      background: radial-gradient(circle, rgba(124, 247, 212, 0.95), rgba(124, 247, 212, 0));
+    }
+
+    .blob.two {
+      right: 8%;
+      bottom: 10%;
+      width: 180px;
+      height: 180px;
+      background: radial-gradient(circle, rgba(255, 211, 110, 0.9), rgba(255, 211, 110, 0));
+      animation-delay: -2s;
+    }
+
+    .sparkles {
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(rgba(255, 255, 255, 0.8) 1px, transparent 1px),
+        radial-gradient(rgba(255, 255, 255, 0.55) 1px, transparent 1px);
+      background-size: 120px 120px, 80px 80px;
+      background-position: 0 0, 40px 30px;
+      opacity: 0.1;
+      animation: twinkle 4s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0) rotate(-1deg);
+      }
+      50% {
+        transform: translateY(-12px) rotate(1deg);
+      }
+    }
+
+    @keyframes drift {
+      0%, 100% {
+        transform: translate(0, 0) scale(1);
+      }
+      50% {
+        transform: translate(22px, -18px) scale(1.08);
+      }
+    }
+
+    @keyframes twinkle {
+      from {
+        transform: scale(1);
+      }
+      to {
+        transform: scale(1.05);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="sparkles" aria-hidden="true"></div>
+  <div class="blob one" aria-hidden="true"></div>
+  <div class="blob two" aria-hidden="true"></div>
+
+  <main class="card" aria-label="Grupo B2">
+    <h1>Grupo B2</h1>
+      <div class="subtitle">test para AWS</div>
+  </main>
+</body>
+</html>
