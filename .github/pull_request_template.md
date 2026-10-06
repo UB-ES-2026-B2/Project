@@ -16,7 +16,7 @@
 
 ## Definition of Done
 
-Ver [docs/definition-of-done.md](../docs/definition-of-done.md).
+Ver [docs/definition-of-done.md](https://github.com/UB-ES-2026-B2/Project/blob/develop/docs/definition-of-done.md).
 
 - [ ] Cumple los criterios de aceptación de su tarjeta de Trello.
 - [ ] El código sigue los estándares (ruff y eslint pasan sin errores).
@@ -24,7 +24,7 @@ Ver [docs/definition-of-done.md](../docs/definition-of-done.md).
 - [ ] Una persona que no es el autor la ha revisado y aprobado.
 - [ ] Todos los checks de CI y de seguridad están en verde.
 - [ ] Está desplegada en staging y probada allí (se marca después del merge a `develop`).
-- [ ] La documentación afectada está actualizada. Si cambia el [acuerdo entre equipos](../docs/acuerdos.md), DevOps lo ha visto.
+- [ ] La documentación afectada está actualizada. Si cambia el [acuerdo entre equipos](https://github.com/UB-ES-2026-B2/Project/blob/develop/docs/acuerdos.md), DevOps lo ha visto.
 
 <!--
 Recordatorios:

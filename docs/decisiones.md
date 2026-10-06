@@ -76,13 +76,13 @@ Aquí está cada decisión que se aparta de las diapositivas de la asignatura (C
   - TLS 1.2 mínimo y un certificado propio requieren un dominio, y no tenemos.
   - Cada excepción tiene su motivo en el fichero. Todo lo demás bloquea el merge.
 
-## D9 · Acceso a AWS con la cuenta root
+## D9 · Acceso a AWS con la cuenta root (temporal)
 
 *Octubre 2026*
 
 - **Lo que dicen las buenas prácticas:** no usar root en el día a día y trabajar con usuarios o roles IAM con MFA.
-- **Decisión:** el equipo trabaja con la cuenta root, que tiene MFA activado.
-- **Mitigación:**
+- **Decisión:** **temporalmente**, el equipo trabaja con la cuenta root, que tiene MFA activado. Es solo hasta crear usuarios IAM con MFA para DevOps y para Claude, que es una tarea pendiente (ver `infra/README.md`). Cuando existan, root deja de usarse y se actualiza esta entrada.
+- **Mitigación mientras tanto:**
   - La pipeline nunca usa root: GitHub Actions entra con roles de OIDC de mínimo privilegio y sin claves.
   - Cada cambio manual se apunta en `infra/README.md`.
   - Los cambios que pasan por Terraform quedan revisados en la PR.

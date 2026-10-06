@@ -36,7 +36,7 @@ env:
 jobs:
   frontend:
     runs-on: ubuntu-latest
-    # Con environment, el token OIDC lleva sub=repo:UB-ES-2026-B2/dev:environment:<nombre>.
+    # Con environment, el token OIDC lleva sub=repo:UB-ES-2026-B2/Project:environment:<nombre>.
     # Las reglas del environment (aprobación, ramas permitidas) se configuran en GitHub.
     environment:
       name: ${{ inputs.environment }}
@@ -96,7 +96,7 @@ jobs:
             --query 'Invalidation.Id' --output text
 
   # backend: pendiente de que exista la EC2 (ver CLAUDE.md, sección CI/CD).
-  #   1. Imagen arm64 en ubuntu-24.04-arm -> ghcr.io/ub-es-2026-b2/dev-backend:<sha> y :<entorno>
+  #   1. Imagen arm64 en ubuntu-24.04-arm -> ghcr.io/ub-es-2026-b2/project-backend:<sha> y :<entorno>
   #      (necesita permissions: packages: write en el workflow que llama).
   #   2. aws ssm send-command -> infra/ec2/deploy.sh <entorno> <sha>
   #      (health check y rollback a /opt/app/<entorno>/.last-good; si falla, el job falla).

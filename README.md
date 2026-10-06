@@ -1,9 +1,9 @@
 # ES-B2 · Portal inmobiliario
 
-[![CI](https://github.com/UB-ES-2026-B2/dev/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/UB-ES-2026-B2/dev/actions/workflows/ci.yml)
-[![Security](https://github.com/UB-ES-2026-B2/dev/actions/workflows/security.yml/badge.svg?branch=develop)](https://github.com/UB-ES-2026-B2/dev/actions/workflows/security.yml)
-[![Deploy staging](https://github.com/UB-ES-2026-B2/dev/actions/workflows/deploy-staging.yml/badge.svg)](https://github.com/UB-ES-2026-B2/dev/actions/workflows/deploy-staging.yml)
-[![Deploy prod](https://github.com/UB-ES-2026-B2/dev/actions/workflows/deploy-prod.yml/badge.svg)](https://github.com/UB-ES-2026-B2/dev/actions/workflows/deploy-prod.yml)
+[![CI](https://github.com/UB-ES-2026-B2/Project/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/UB-ES-2026-B2/Project/actions/workflows/ci.yml)
+[![Security](https://github.com/UB-ES-2026-B2/Project/actions/workflows/security.yml/badge.svg?branch=develop)](https://github.com/UB-ES-2026-B2/Project/actions/workflows/security.yml)
+[![Deploy staging](https://github.com/UB-ES-2026-B2/Project/actions/workflows/deploy-staging.yml/badge.svg)](https://github.com/UB-ES-2026-B2/Project/actions/workflows/deploy-staging.yml)
+[![Deploy prod](https://github.com/UB-ES-2026-B2/Project/actions/workflows/deploy-prod.yml/badge.svg)](https://github.com/UB-ES-2026-B2/Project/actions/workflows/deploy-prod.yml)
 
 Proyecto de Ingeniería del Software (UB), Grupo B2. Búsqueda de inmuebles con mapa, favoritos, contacto con anunciantes y publicación de anuncios.
 
@@ -28,8 +28,8 @@ Proyecto de Ingeniería del Software (UB), Grupo B2. Búsqueda de inmuebles con 
 ## Arrancar en local
 
 ```bash
-git clone https://github.com/UB-ES-2026-B2/dev.git
-cd dev
+git clone https://github.com/UB-ES-2026-B2/Project.git
+cd Project
 cp .env.example .env          # opcional: sin .env se usan los mismos valores por defecto
 docker compose up --build
 ```

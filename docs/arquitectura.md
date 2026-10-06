@@ -64,7 +64,7 @@ Los dos despliegues usan el mismo workflow reutilizable ([`_deploy.yml`](../.git
 
 ### Backend *(pendiente de la EC2)*
 
-1. GitHub Actions construye la imagen para arm64 en `ubuntu-24.04-arm` y la sube a `ghcr.io/ub-es-2026-b2/dev-backend:<sha>`.
+1. GitHub Actions construye la imagen para arm64 en `ubuntu-24.04-arm` y la sube a `ghcr.io/ub-es-2026-b2/project-backend:<sha>`.
 2. `aws ssm send-command` ejecuta `infra/ec2/deploy.sh <entorno> <sha>` en la EC2. No hay SSH ni puerto 22.
 3. `deploy.sh` arranca la versión nueva y llama a `/api/health` varias veces. Si falla, vuelve a la imagen guardada en `/opt/app/<entorno>/.last-good` y el workflow falla.
 

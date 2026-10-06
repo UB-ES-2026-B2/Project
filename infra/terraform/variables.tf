@@ -7,7 +7,7 @@ variable "region" {
 variable "github_repo" {
   description = "Repositorio de GitHub (org/nombre) en el que confían los roles de OIDC."
   type        = string
-  default     = "UB-ES-2026-B2/dev"
+  default     = "UB-ES-2026-B2/Project"
 }
 
 variable "environments" {

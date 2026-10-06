@@ -8,7 +8,7 @@
       "Condition": {
         "StringEquals": {
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-          "token.actions.githubusercontent.com:sub": "repo:UB-ES-2026-B2/dev:pull_request"
+          "token.actions.githubusercontent.com:sub": "repo:UB-ES-2026-B2/Project:pull_request"
         }
       }
     }
