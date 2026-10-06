@@ -1,0 +1,54 @@
+# PLACEHOLDER DevOps: mínimo para que la CI y el Dockerfile funcionen.
+# El equipo de backend es dueño de este fichero: añadid aquí vuestras dependencias.
+# Requisitos de la pipeline: mantener [project].dependencies (el Dockerfile las lee de aquí),
+# el extra "dev" con ruff/pytest y las secciones [tool.ruff] y [tool.pytest.ini_options].
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "es-b2-backend"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "pydantic-settings>=2.4",
+  "sqlalchemy>=2.0",
+  "psycopg[binary]>=3.2",
+  "alembic>=1.13",
+]
+
+[project.optional-dependencies]
+dev = [
+  "ruff>=0.6",
+  "pytest>=8",
+  "pytest-cov>=5",
+  "httpx>=0.27",
+]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+
+[tool.coverage.report]
+# Cobertura mínima: empieza en 60 % y se sube en cada sprint (ver CLAUDE.md, CI/CD).
+fail_under = 60
+show_missing = true
+skip_empty = true

@@ -1,0 +1,28 @@
+name: Deploy prod
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+# Nunca dos despliegues a la vez en el mismo entorno; el siguiente espera.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # workflow_dispatch se puede lanzar desde cualquier rama; a producción solo va main.
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/_deploy.yml
+    with:
+      # El environment "production" exige la aprobación de un miembro de DevOps
+      # (Settings → Environments → production → Required reviewers).
+      environment: production
+      url: https://d31v8l8u9lnbbr.cloudfront.net
+      frontend_bucket: es-b2-frontend-891377256343
+      cloudfront_distribution: E2JFW10E80A64

@@ -1,0 +1,102 @@
+name: Deploy (reutilizable)
+
+# Lo llaman deploy-staging.yml y deploy-prod.yml. Hace lo mismo contra el entorno que reciba,
+# así staging y producción no se desincronizan.
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: Environment de GitHub (staging o production)
+        required: true
+        type: string
+      url:
+        description: URL pública del entorno
+        required: false
+        type: string
+        default: ""
+      frontend_bucket:
+        description: Bucket S3 del frontend. Vacío = el entorno aún no existe, se salta.
+        required: false
+        type: string
+        default: ""
+      cloudfront_distribution:
+        description: ID de la distribución de CloudFront del entorno
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  id-token: write # OIDC con AWS
+  contents: read
+
+env:
+  AWS_REGION: eu-west-1
+  AWS_ROLE: arn:aws:iam::891377256343:role/es-b2-github-deploy
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    # Con environment, el token OIDC lleva sub=repo:UB-ES-2026-B2/dev:environment:<nombre>.
+    # Las reglas del environment (aprobación, ramas permitidas) se configuran en GitHub.
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ inputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ¿Hay algo que desplegar?
+        id: check
+        env:
+          BUCKET: ${{ inputs.frontend_bucket }}
+        run: |
+          if [ ! -f frontend/package.json ]; then
+            echo "::notice::No existe frontend/package.json; no se despliega el frontend."
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          elif [ -z "$BUCKET" ]; then
+            echo "::warning::El entorno ${{ inputs.environment }} todavía no tiene bucket de frontend; no se despliega."
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.check.outputs.deploy == 'true'
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build
+        if: steps.check.outputs.deploy == 'true'
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        if: steps.check.outputs.deploy == 'true'
+        with:
+          role-to-assume: ${{ env.AWS_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Subir a S3
+        if: steps.check.outputs.deploy == 'true'
+        env:
+          BUCKET: ${{ inputs.frontend_bucket }}
+        run: aws s3 sync frontend/dist "s3://${BUCKET}" --delete
+
+      - name: Invalidar CloudFront
+        if: steps.check.outputs.deploy == 'true'
+        env:
+          DISTRIBUTION: ${{ inputs.cloudfront_distribution }}
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${DISTRIBUTION}" \
+            --paths "/*" \
+            --query 'Invalidation.Id' --output text
+
+  # backend: pendiente de que exista la EC2 (ver CLAUDE.md, sección CI/CD).
+  #   1. Imagen arm64 en ubuntu-24.04-arm -> ghcr.io/ub-es-2026-b2/dev-backend:<sha> y :<entorno>
+  #      (necesita permissions: packages: write en el workflow que llama).
+  #   2. aws ssm send-command -> infra/ec2/deploy.sh <entorno> <sha>
+  #      (health check y rollback a /opt/app/<entorno>/.last-good; si falla, el job falla).

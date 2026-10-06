@@ -1,0 +1,22 @@
+# Cada línea asigna revisores automáticos a una ruta. La última coincidencia gana.
+# TODO DevOps: sustituir los usuarios de ejemplo por los usuarios reales de GitHub
+# (o equipos de la organización, p. ej. @UB-ES-2026-B2/devops) y descomentar.
+# Un usuario que no existe o no tiene acceso al repo deja la regla sin efecto.
+
+# Por defecto: cualquier cosa sin dueño específico la revisa DevOps
+# *                       @Jose
+
+# Backend
+# /backend/               @backend-1 @backend-2
+# /backend/Dockerfile     @Jose
+# /backend/docker-entrypoint.sh @Jose
+
+# Frontend
+# /frontend/              @frontend-1 @frontend-2
+
+# DevOps
+# /.github/               @Jose
+# /infra/                 @Jose
+# /docker-compose*.yml    @Jose
+# /docs/                  @Jose
+# /CLAUDE.md              @Jose

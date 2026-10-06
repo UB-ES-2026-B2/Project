@@ -1,0 +1,28 @@
+name: Deploy staging
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+# Nunca dos despliegues a la vez en el mismo entorno; el siguiente espera.
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # workflow_dispatch se puede lanzar desde cualquier rama; a staging solo va develop.
+    if: github.ref == 'refs/heads/develop'
+    uses: ./.github/workflows/_deploy.yml
+    with:
+      environment: staging
+      # TODO DevOps: rellenar cuando existan el bucket y el CloudFront de staging.
+      # Mientras estén vacíos, el despliegue del frontend se salta con un aviso.
+      url: ""
+      frontend_bucket: ""
+      cloudfront_distribution: ""
