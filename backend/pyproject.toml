@@ -48,7 +48,7 @@ source = ["app"]
 branch = true
 
 [tool.coverage.report]
-# Cobertura mínima: empieza en 60 % y se sube en cada sprint (ver CLAUDE.md, CI/CD).
+# Cobertura mínima: empieza en 60 % y se sube en cada sprint (ver docs/decisiones.md, D7).
 fail_under = 60
 show_missing = true
 skip_empty = true

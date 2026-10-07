@@ -49,5 +49,7 @@ override.tf.json
 .DS_Store
 Thumbs.db
 
-# --- Claude Code (ajustes personales) ---
+# --- Claude Code (personal de cada usuario, no se sube) ---
+CLAUDE.md
+CLAUDE.local.md
 .claude/settings.local.json

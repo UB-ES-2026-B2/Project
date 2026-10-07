@@ -1,6 +1,6 @@
 # Arquitectura y despliegue
 
-> Las piezas marcadas como *(pendiente)* todavía no existen en AWS. Ver la lista de pendientes en [`CLAUDE.md`](../CLAUDE.md#aws-ya-creado).
+> Las piezas marcadas como *(pendiente)* todavía no existen en AWS. Ver la lista de pendientes en [`infra/README.md`](../infra/README.md#pendiente).
 
 ## Vista general
 

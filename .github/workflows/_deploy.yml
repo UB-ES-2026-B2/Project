@@ -97,7 +97,7 @@ jobs:
             --paths "/*" \
             --query 'Invalidation.Id' --output text
 
-  # backend: pendiente de que exista la EC2 (ver CLAUDE.md, sección CI/CD).
+  # backend: pendiente de que exista la EC2 (ver docs/arquitectura.md, "Backend").
   #   1. Imagen arm64 en ubuntu-24.04-arm -> ghcr.io/ub-es-2026-b2/project-backend:<sha> y :<entorno>
   #      (necesita permissions: packages: write en el workflow que llama).
   #   2. aws ssm send-command -> infra/ec2/deploy.sh <entorno> <sha>
