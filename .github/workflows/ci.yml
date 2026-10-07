@@ -114,6 +114,19 @@ jobs:
       - name: ruff format
         run: ruff format --check .
 
+      # Va antes de las migraciones: con varios heads, `alembic upgrade head` falla
+      # con un error poco claro y este mensaje no llegaría a verse.
+      - name: Un solo head de Alembic
+        if: hashFiles('backend/alembic.ini') != ''
+        run: |
+          heads="$(alembic heads)"
+          echo "$heads"
+          n="$(printf '%s\n' "$heads" | grep -c . || true)"
+          if [ "$n" -gt 1 ]; then
+            echo "::error::Hay varias migraciones head: haz git merge develop y une las migraciones, ver CONTRIBUTING.md"
+            exit 1
+          fi
+
       - name: Migraciones (alembic upgrade head)
         if: hashFiles('backend/alembic.ini') != ''
         run: alembic upgrade head
