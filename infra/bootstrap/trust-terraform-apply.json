@@ -8,7 +8,7 @@
       "Condition": {
         "StringEquals": {
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-          "token.actions.githubusercontent.com:sub": "repo:UB-ES-2026-B2/Project:environment:terraform"
+          "token.actions.githubusercontent.com:sub": "repo:UB-ES-2026-B2@335691788/Project@1407787603:environment:terraform"
         }
       }
     }

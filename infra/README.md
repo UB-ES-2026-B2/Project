@@ -16,8 +16,8 @@ Cuenta `891377256343`, región `eu-west-1`. Todos los recursos llevan la etiquet
 | Rol de despliegue | `es-b2-github-deploy` (+ política en línea `deploy-frontend`) | `aws_iam_role.github_deploy` |
 | Presupuesto | `es-b2-mensual`, 20 USD/mes, sin alertas | `aws_budgets_budget.monthly` |
 | Bucket del estado de Terraform | `es-b2-tfstate-891377256343` (privado, AES256, versionado) | No: es el arranque |
-| Rol de `terraform plan` | `es-b2-github-terraform-plan` *(pendiente de crear)* | No: es el arranque |
-| Rol de `terraform apply` | `es-b2-github-terraform-apply` *(pendiente de crear)* | No: es el arranque |
+| Rol de `terraform plan` | `es-b2-github-terraform-plan` | No: es el arranque |
+| Rol de `terraform apply` | `es-b2-github-terraform-apply` | No: es el arranque |
 
 ## Cambios manuales
 
@@ -27,18 +27,23 @@ Mientras la migración a Terraform no esté aplicada, cualquier cambio hecho a m
 |---|---|---|
 | 2026-10-06 | DevOps | Creación inicial de buckets, CloudFront, OAC, función, OIDC, rol de GitHub y presupuesto |
 | 2026-10-06 | Claude (con root) | Bucket del estado `es-b2-tfstate-891377256343`: privado, AES256, versionado y etiqueta `project=es-b2` |
+| 2026-10-07 | DevOps (CloudShell) | Confianza de los tres roles (`es-b2-github-deploy`, `es-b2-github-terraform-plan`, `es-b2-github-terraform-apply`) cambiada al formato de sub con IDs inmutables: `repo:UB-ES-2026-B2@335691788/Project@1407787603:<contexto>` |
 
 ## Arranque (una sola vez)
 
 Terraform no puede crear el bucket donde guarda su propio estado ni los roles con los que se ejecuta. Esto se crea a mano:
 
+> **Formato del `sub` de OIDC.** GitHub envía `repo:<org>@<id org>/<repo>@<id repo>:<contexto>`, aquí `repo:UB-ES-2026-B2@335691788/Project@1407787603:<contexto>`. Las condiciones de confianza deben usar ese formato; con `repo:UB-ES-2026-B2/Project:...` la asunción del rol falla. Ver `docs/decisiones.md`, D10.
+
 1. **Bucket del estado** `es-b2-tfstate-891377256343`: privado, cifrado y con versionado, para poder recuperar un estado roto. ✅ Creado.
 2. **Rol `es-b2-github-terraform-plan`**:
-   - Confía en `repo:UB-ES-2026-B2/Project:pull_request`.
+   - Confía en `repo:UB-ES-2026-B2@335691788/Project@1407787603:pull_request`.
    - Tiene `ReadOnlyAccess`, más escritura de los ficheros `.tflock` en el bucket del estado.
    - Tiene una denegación explícita de lectura de los objetos de los buckets de fotos y copias, para que el código de una PR no pueda leer los volcados de la base de datos.
    - También tiene denegados los secretos (`secretsmanager:GetSecretValue`, `kms:Decrypt`).
-3. **Rol `es-b2-github-terraform-apply`**: solo confía en `repo:UB-ES-2026-B2/Project:environment:terraform`. En GitHub, ese environment exige la aprobación de DevOps y solo admite `main`.
+3. **Rol `es-b2-github-terraform-apply`**: solo confía en `repo:UB-ES-2026-B2@335691788/Project@1407787603:environment:terraform`. En GitHub, ese environment exige la aprobación de DevOps y solo admite `main`.
+
+✅ Los dos roles existen (comprobado el 2026-10-07).
 
 Para crear los dos roles: abre **AWS CloudShell** (icono `>_` arriba a la derecha de la consola, en `eu-west-1`), sube los tres JSON de [`bootstrap/`](bootstrap/) con *Actions → Upload file* y ejecuta:
 
@@ -82,7 +87,6 @@ Añade la entrada `staging` a `var.environments` en [`variables.tf`](terraform/v
 ## Pendiente
 
 - Usuarios IAM con MFA para DevOps y para Claude, y dejar de usar root (ver `docs/decisiones.md`, D9).
-- Arranque (ver arriba).
 - Staging (bucket + CloudFront).
 - `ec2.tf`: t4g.micro arm64, IP elástica, Docker, SSM y agente de CloudWatch (`ec2/user-data.sh`, `ec2/deploy.sh`).
 - `monitoring.tf`: alarma de recuperación, logs de los contenedores (14 días) y alarma de `/api/health`.

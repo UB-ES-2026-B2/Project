@@ -86,3 +86,12 @@ Aquí está cada decisión que se aparta de las diapositivas de la asignatura (C
   - La pipeline nunca usa root: GitHub Actions entra con roles de OIDC de mínimo privilegio y sin claves.
   - Cada cambio manual se apunta en `infra/README.md`.
   - Los cambios que pasan por Terraform quedan revisados en la PR.
+
+## D10 · Sub de OIDC con los IDs inmutables de GitHub
+
+*Octubre 2026*
+
+- **Contexto:** GitHub envía el claim `sub` del token OIDC con los IDs numéricos de la organización y del repo: `repo:UB-ES-2026-B2@335691788/Project@1407787603:<contexto>` (comprobado en CloudTrail).
+- **Decisión:** las condiciones de confianza de los roles de AWS usan ese formato. En Terraform va en la variable `github_oidc_subject_prefix`; el nombre legible (`UB-ES-2026-B2/Project`) solo aparece en textos como las descripciones.
+- **Por qué:** los IDs no cambian aunque se renombre la org o el repo, y evitan que un repo nuevo con el mismo nombre pueda asumir nuestros roles.
+- **Ojo:** si el repo se **recrea** (ID nuevo) o cambia el formato del `sub`, hay que actualizar el prefijo en `variables.tf`, en `infra/bootstrap/` y en AWS. Los IDs salen de `gh api repos/UB-ES-2026-B2/Project --jq '.owner.id, .id'`.

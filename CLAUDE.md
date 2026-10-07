@@ -261,7 +261,9 @@ Cuenta `891377256343`, región `eu-west-1`. Todos los recursos llevan la etiquet
 | Bucket fotos | `es-b2-media-891377256343` (CORS permite PUT desde la URL pública y `localhost:5173`) |
 | Bucket copias | `es-b2-backups-891377256343` (borra a los 30 días) |
 | Bucket estado Terraform | `es-b2-tfstate-891377256343` (versionado; fuera de Terraform) |
-| Rol para GitHub | `arn:aws:iam::891377256343:role/es-b2-github-deploy` (subir frontend e invalidar caché). Confía en `refs/heads/main`, `refs/heads/develop` y `environment:*` |
+| Rol para GitHub | `arn:aws:iam::891377256343:role/es-b2-github-deploy` (subir frontend e invalidar caché). Confía en `ref:refs/heads/main`, `ref:refs/heads/develop` y `environment:*` |
+| Roles de Terraform | `es-b2-github-terraform-plan` (`pull_request`) y `es-b2-github-terraform-apply` (`environment:terraform`) |
+| Sub de OIDC | `repo:UB-ES-2026-B2@335691788/Project@1407787603:<contexto>` (IDs inmutables de org y repo; ver D10) |
 | CloudFront Function | `es-b2-spa-rewrite`: rutas sin extensión → `/index.html` |
 | Presupuesto | `es-b2-mensual`, 20 USD/mes (sin alertas por email todavía) |
 
@@ -272,7 +274,7 @@ Cuenta `891377256343`, región `eu-west-1`. Todos los recursos llevan la etiquet
 - Ruta `/api/*` en los dos CloudFront hacia la EC2, sin caché.
 - Permisos `ssm:SendCommand` y de los buckets de staging en el rol de GitHub.
 - Copia diaria de Postgres, alarma de recuperación, logs en CloudWatch y alertas del presupuesto.
-- Roles `es-b2-github-terraform-plan` y `-apply` (JSON y comandos en `infra/bootstrap/` e `infra/README.md`) y primer apply de los imports (el código ya está en `infra/terraform/`).
+- Primer apply de los imports de Terraform (el código ya está en `infra/terraform/`).
 
 **Reglas para Claude:**
 - No creo, modifico ni borro recursos de AWS sin confirmación del usuario.

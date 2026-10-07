@@ -36,7 +36,9 @@ env:
 jobs:
   frontend:
     runs-on: ubuntu-latest
-    # Con environment, el token OIDC lleva sub=repo:UB-ES-2026-B2/Project:environment:<nombre>.
+    # Con environment, el token OIDC lleva
+    # sub=repo:UB-ES-2026-B2@335691788/Project@1407787603:environment:<nombre>
+    # (con los IDs inmutables de la org y del repo; ver docs/decisiones.md, D10).
     # Las reglas del environment (aprobación, ramas permitidas) se configuran en GitHub.
     environment:
       name: ${{ inputs.environment }}

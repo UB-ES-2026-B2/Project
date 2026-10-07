@@ -13,7 +13,7 @@ resource "aws_iam_openid_connect_provider" "github" {
 
 resource "aws_iam_role" "github_deploy" {
   name                 = "es-b2-github-deploy"
-  description          = "Despliegue desde GitHub Actions (${var.github_repo})"
+  description          = "Despliegue desde GitHub Actions (UB-ES-2026-B2/Project)"
   max_session_duration = 3600
 
   assume_role_policy = jsonencode({
@@ -26,9 +26,9 @@ resource "aws_iam_role" "github_deploy" {
         StringEquals = { "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com" }
         StringLike = {
           "token.actions.githubusercontent.com:sub" = [
-            "repo:${var.github_repo}:ref:refs/heads/main",
-            "repo:${var.github_repo}:ref:refs/heads/develop",
-            "repo:${var.github_repo}:environment:*",
+            "repo:${var.github_oidc_subject_prefix}:ref:refs/heads/main",
+            "repo:${var.github_oidc_subject_prefix}:ref:refs/heads/develop",
+            "repo:${var.github_oidc_subject_prefix}:environment:*",
           ]
         }
       }

@@ -4,10 +4,16 @@ variable "region" {
   default     = "eu-west-1"
 }
 
-variable "github_repo" {
-  description = "Repositorio de GitHub (org/nombre) en el que confían los roles de OIDC."
+variable "github_oidc_subject_prefix" {
+  description = <<-EOT
+    Prefijo del claim "sub" del token OIDC de GitHub Actions, con los IDs inmutables:
+    <org>@<id de la org>/<repo>@<id del repo>. El sub completo es "repo:<prefijo>:<contexto>"
+    (p. ej. ":ref:refs/heads/main", ":pull_request", ":environment:production").
+    Los IDs salen de la API: gh api repos/UB-ES-2026-B2/Project --jq '.owner.id, .id'.
+    Si el repo se renombra o se recrea, hay que actualizarlo (docs/decisiones.md, D10).
+  EOT
   type        = string
-  default     = "UB-ES-2026-B2/Project"
+  default     = "UB-ES-2026-B2@335691788/Project@1407787603"
 }
 
 variable "environments" {
