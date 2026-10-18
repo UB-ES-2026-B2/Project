@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import PropertyCard, { PropertyCardSkeleton } from '../components/catalog/PropertyCard.tsx';
 import useProperties from '../components/catalog/useProperties.js';
+import AuthModal from './AuthModal.jsx';
 
 function App() {
   const { properties, isLoading } = useProperties();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   return (
     <main className="app">
@@ -13,8 +16,16 @@ function App() {
       <section className="property-grid" aria-label="Inmuebles disponibles">
         {isLoading
           ? Array.from({ length: 3 }, (_, index) => <PropertyCardSkeleton key={index} />)
-          : properties.map((property) => <PropertyCard key={property.id} property={property} />)}
+          : properties.map((property) => (
+            <PropertyCard
+              key={property.id}
+              property={property}
+              isAuthenticated={false}
+              onRequireAuth={() => setIsAuthModalOpen(true)}
+            />
+          ))}
       </section>
+      {isAuthModalOpen && <AuthModal onClose={() => setIsAuthModalOpen(false)} />}
     </main>
   );
 }

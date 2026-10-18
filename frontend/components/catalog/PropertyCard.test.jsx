@@ -1,6 +1,16 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
 import PropertyCard, { PropertyCardSkeleton } from './PropertyCard.tsx';
+
+function renderWithQueryClient(ui) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+  );
+}
 
 const property = {
   id: 'test-home',
@@ -17,9 +27,10 @@ const property = {
 describe('PropertyCard', () => {
   it('shows the price-drop badge and keeps gallery controls from selecting the card', () => {
     const onSelect = vi.fn();
-    render(<PropertyCard property={property} onSelect={onSelect} />);
+    renderWithQueryClient(<PropertyCard property={property} onSelect={onSelect} />);
 
     expect(screen.getByText('Bajada de precio')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Añadir a favoritos' }));
     fireEvent.click(screen.getByRole('button', { name: 'Ver imagen siguiente' }));
 
     expect(screen.getByText('2 / 2')).toBeInTheDocument();
@@ -27,7 +38,7 @@ describe('PropertyCard', () => {
   });
 
   it('changes images with a horizontal touch swipe', () => {
-    render(<PropertyCard property={property} />);
+    renderWithQueryClient(<PropertyCard property={property} />);
     const gallery = screen.getByAltText('Piso de prueba - imagen 1').parentElement;
 
     fireEvent.touchStart(gallery, { touches: [{ clientX: 120 }] });
@@ -37,7 +48,7 @@ describe('PropertyCard', () => {
   });
 
   it('falls back to the property placeholder when an image fails', () => {
-    render(<PropertyCard property={property} />);
+    renderWithQueryClient(<PropertyCard property={property} />);
     const image = screen.getByAltText('Piso de prueba - imagen 1');
 
     fireEvent.error(image);

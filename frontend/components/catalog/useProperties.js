@@ -1,6 +1,11 @@
+import { useQuery } from '@tanstack/react-query';
+
+export const PROPERTIES_QUERY_KEY = ['properties'];
+
 const MOCK_PROPERTIES = [
   {
     id: 'eixample-01',
+    isFavorite: false,
     title: 'Piso luminoso con balcón',
     location: 'L’Eixample, Barcelona',
     price: 385000,
@@ -15,6 +20,7 @@ const MOCK_PROPERTIES = [
   },
   {
     id: 'gracia-02',
+    isFavorite: false,
     title: 'Ático reformado con terraza',
     location: 'Gràcia, Barcelona',
     price: 520000,
@@ -28,6 +34,7 @@ const MOCK_PROPERTIES = [
   },
   {
     id: 'sants-03',
+    isFavorite: false,
     title: 'Vivienda familiar exterior',
     location: 'Sants, Barcelona',
     price: 319000,
@@ -41,7 +48,13 @@ const MOCK_PROPERTIES = [
 ];
 
 function useProperties() {
-  return { properties: MOCK_PROPERTIES, isLoading: false };
+  const { data: properties, isLoading } = useQuery({
+    queryKey: PROPERTIES_QUERY_KEY,
+    queryFn: () => MOCK_PROPERTIES,
+    initialData: MOCK_PROPERTIES,
+    staleTime: Infinity,
+  });
+  return { properties, isLoading };
 }
 
 export default useProperties;
