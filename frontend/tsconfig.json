@@ -12,5 +12,5 @@
     "checkJs": false,
     "types": ["react"]
   },
-  "include": ["*.jsx"]
+  "include": ["src/**/*.jsx"]
 }

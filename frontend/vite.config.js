@@ -14,7 +14,7 @@ export default defineConfig({
     coverage: {
       reporter: ['text', 'json-summary'],
       include: ['**/*.jsx'],
-      exclude: ['main.jsx'],
+      exclude: ['**/main.jsx'],
     },
   },
 });
