@@ -1,13 +1,22 @@
 import { useRef, useState, type KeyboardEvent, type SyntheticEvent, type TouchEvent } from 'react';
+import { OPERATIONS, SPACE_TYPE_LABELS } from './spaceTypes.js';
+
+export type Operation = 'sale' | 'rent';
+export type SpaceType = 'piso' | 'casa' | 'local' | 'oficina' | 'garaje' | 'trastero';
 
 export type Property = {
   id: string;
   title: string;
   location: string;
+  postalCode?: string;
+  operation: Operation;
+  spaceType: SpaceType;
+  /** En alquiler, precio mensual. */
   price: number;
   previousPrice?: number;
-  bedrooms: number;
-  bathrooms: number;
+  /** Un garaje o un trastero no tienen dormitorios ni baños. */
+  bedrooms?: number;
+  bathrooms?: number;
   area: number;
   images: string[];
 };
@@ -15,15 +24,18 @@ export type Property = {
 type PropertyCardProps = {
   property: Property;
   onSelect?: (property: Property) => void;
+  /** Nivel del título según la página: h2 en el catálogo, h3 dentro de una sección. */
+  titleAs?: 'h2' | 'h3';
 };
 
 const PLACEHOLDER_IMAGE = '/assets/property-placeholder.webp';
 
-function PropertyCard({ property, onSelect }: PropertyCardProps) {
+function PropertyCard({ property, onSelect, titleAs: Title = 'h2' }: PropertyCardProps) {
   const [imageIndex, setImageIndex] = useState(0);
   const touchStartX = useRef<number | null>(null);
   const image = property.images[imageIndex] ?? PLACEHOLDER_IMAGE;
   const hasPriceDrop = property.previousPrice !== undefined && property.previousPrice > property.price;
+  const isRent = property.operation === 'rent';
 
   const changeImage = (direction: number) => {
     if (property.images.length < 2) return;
@@ -77,9 +89,16 @@ function PropertyCard({ property, onSelect }: PropertyCardProps) {
           alt={`${property.title} - imagen ${imageIndex + 1}`}
           onError={handleImageError}
         />
-        {hasPriceDrop && (
-          <span className="property-card__price-drop">Bajada de precio</span>
-        )}
+        <div className="property-card__badges">
+          {property.operation && (
+            <span className={`property-card__operation property-card__operation--${property.operation}`}>
+              {OPERATIONS[property.operation].badge}
+            </span>
+          )}
+          {hasPriceDrop && (
+            <span className="property-card__price-drop">Bajada de precio</span>
+          )}
+        </div>
         {property.images.length > 1 && (
           <>
             <button
@@ -114,12 +133,18 @@ function PropertyCard({ property, onSelect }: PropertyCardProps) {
       <div className="property-card__content">
         <p className="property-card__price">
           {property.price.toLocaleString('es-ES')} €
+          {isRent && <span className="property-card__price-period">/mes</span>}
         </p>
-        <h2 className="property-card__title">{property.title}</h2>
+        {property.spaceType && (
+          <p className="property-card__type">{SPACE_TYPE_LABELS[property.spaceType]}</p>
+        )}
+        <Title className="property-card__title">{property.title}</Title>
         <p className="property-card__location">{property.location}</p>
         <ul className="property-card__features" aria-label="Características">
-          <li>{property.bedrooms} hab.</li>
-          <li>{property.bathrooms} baños</li>
+          {property.bedrooms !== undefined && <li>{property.bedrooms} hab.</li>}
+          {property.bathrooms !== undefined && (
+            <li>{property.bathrooms} {property.bathrooms === 1 ? 'baño' : 'baños'}</li>
+          )}
           <li>{property.area} m²</li>
         </ul>
         <a className="property-card__details" href={`/inmueble/${property.id}`}>
