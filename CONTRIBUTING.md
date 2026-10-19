@@ -139,6 +139,7 @@ pytest --cov=app
 ```bash
 npm ci
 npm run lint
+npm run typecheck
 npm test
 npm run build
 ```
@@ -181,6 +182,7 @@ Si tres personas crean la estructura inicial a la vez en tres ramas distintas, l
 
   ```json
   "lint": "eslint .",
+  "typecheck": "tsc --noEmit",
   "test": "vitest run --coverage",
   "build": "vite build"
   ```

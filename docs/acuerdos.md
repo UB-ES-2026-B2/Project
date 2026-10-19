@@ -28,6 +28,7 @@ La CI y el despliegue dan por hecho todo lo que hay en esta página. Si un equip
 - Comandos que ejecuta la CI desde `frontend/`:
   - `npm ci`
   - `npm run lint`
+  - `npm run typecheck`: `tsc --noEmit` sobre `src/` y `components/`
   - `npm test`: vitest **sin modo watch y con cobertura**, por ejemplo `"test": "vitest run --coverage"`. Si configuráis el reporter `json-summary`, la CI publica el resumen en la PR.
   - `npm run build`
 - Las rutas de la SPA no deben tener extensión (`/inmueble/42`, no `/inmueble/42.html`). CloudFront reescribe las rutas sin extensión a `/index.html`.

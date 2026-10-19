@@ -189,6 +189,7 @@ jobs:
 
       - run: npm ci
       - run: npm run lint
+      - run: npm run typecheck
       # Según el acuerdo, `npm test` ejecuta vitest sin watch y con cobertura.
       - run: npm test
       - run: npm run build
