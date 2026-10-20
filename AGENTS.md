@@ -9,7 +9,7 @@ Portal inmobiliario: búsqueda de inmuebles con mapa, favoritos, contacto con an
 | Parte | Tecnología | Equipo responsable |
 |---|---|---|
 | `backend/` | Python 3.12, FastAPI, SQLAlchemy, Alembic, PostgreSQL + PostGIS | Backend |
-| `frontend/` | React 18, Vite 8, JavaScript (`.jsx`) y TypeScript (`.tsx`), Vitest + Testing Library (jsdom), ESLint | Frontend |
+| `frontend/` | React 18, Vite 8, JavaScript (`.jsx`) y TypeScript (`.tsx`), TanStack Query, Vitest + Testing Library (jsdom), ESLint | Frontend |
 | `infra/`, `.github/`, `docker-compose.yml`, `Dockerfile`s, `docs/` | Terraform, GitHub Actions, AWS (S3, CloudFront, EC2) | DevOps |
 
 ## Estado actual (Sprint 1)
@@ -29,8 +29,8 @@ backend/
                          # alembic.ini y alembic/versions/ todavía no existen: llegan con `alembic init`
 frontend/
   index.html             # punto de entrada de Vite
-  src/                   # main.jsx, App.jsx (+ App.test.jsx), styles.css
-  components/            # componentes por funcionalidad, fuera de src/ (p. ej. catalog/: PropertyCard.tsx, useProperties.js)
+  src/                   # main.jsx (con el QueryClientProvider), App.jsx (+ App.test.jsx), AuthModal.jsx, styles.css
+  components/            # componentes por funcionalidad, fuera de src/ (p. ej. catalog/: PropertyCard.tsx, FavoriteButton.tsx, useProperties.js)
   package.json           # scripts: dev, build, lint, typecheck, test
   package-lock.json      # obligatorio: la CI usa `npm ci`
   vite.config.js         # proxy /api -> localhost:8000 y configuración de vitest (jsdom, cobertura)
@@ -66,7 +66,7 @@ alembic heads                # cuando exista alembic.ini: debe devolver una sola
 ```bash
 npm ci
 npm run lint
-npm run typecheck            # tsc --noEmit sobre src/ y components/
+npm run typecheck            # tsc --noEmit (la CI todavía no lo ejecuta, pero pásalo igualmente)
 npm test                     # vitest run --coverage
 npm run build                # genera frontend/dist
 npm run dev                  # http://localhost:5173

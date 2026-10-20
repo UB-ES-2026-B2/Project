@@ -76,7 +76,6 @@ pytest --cov=app
 ```bash
 npm ci
 npm run lint
-npm run typecheck
 npm test
 npm run build
 ```
@@ -93,7 +92,7 @@ npm run build
 
 | Workflow | Cuándo | Qué hace |
 |---|---|---|
-| [CI](.github/workflows/ci.yml) | PR y push a `develop`/`main` | Backend: ruff, pytest con Postgres+PostGIS y cobertura (mínimo 60 %), y build de la imagen arm64. Frontend: lint, typecheck, tests con cobertura (mínimo 60 %) y build. En las PRs, cada parte solo se ejecuta si cambian sus ficheros. |
+| [CI](.github/workflows/ci.yml) | PR y push a `develop`/`main` | Backend: ruff, pytest con Postgres+PostGIS y cobertura (mínimo 60 %), y build de la imagen arm64. Frontend: lint, tests con cobertura y build. En las PRs, cada parte solo se ejecuta si cambian sus ficheros. |
 | [Security](.github/workflows/security.yml) | PR, push y cada lunes | CodeQL, Trivy (dependencias e imagen) y Checkov (Terraform). Un hallazgo alto o crítico bloquea el merge. |
 | [Deploy staging](.github/workflows/deploy-staging.yml) | Push a `develop` | Frontend a S3 + CloudFront de staging. Backend, cuando exista la EC2. |
 | [Deploy prod](.github/workflows/deploy-prod.yml) | Push a `main` | Lo mismo contra producción, con la aprobación de DevOps. |
