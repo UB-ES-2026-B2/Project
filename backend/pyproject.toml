@@ -4,7 +4,7 @@
 # el extra "dev" con ruff/pytest y las secciones [tool.ruff] y [tool.pytest.ini_options].
 
 [build-system]
-requires = ["setuptools>=69"]
+requires = ["setuptools>=84.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
