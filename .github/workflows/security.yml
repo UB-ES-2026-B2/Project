@@ -27,7 +27,7 @@ jobs:
       backend_image: ${{ steps.detect.outputs.backend_image }}
       terraform: ${{ steps.detect.outputs.terraform }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: detect
         run: |
           langs='"actions"'
@@ -53,15 +53,15 @@ jobs:
       matrix:
         language: ${{ fromJSON(needs.setup.outputs.languages) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: github/codeql-action/init@v3
+      - uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           build-mode: none
           queries: security-extended
 
-      - uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/analyze@v4
         with:
           category: /language:${{ matrix.language }}
 
@@ -74,7 +74,7 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Fijada por SHA (no por etiqueta) para que no se rompa ni cambie si se mueven o
       # borran las etiquetas. Dependabot (ecosistema github-actions) propondrá las
@@ -92,7 +92,7 @@ jobs:
           output: trivy-deps.sarif
           limit-severities-for-sarif: true
 
-      - uses: github/codeql-action/upload-sarif@v3
+      - uses: github/codeql-action/upload-sarif@v4
         if: always() && hashFiles('trivy-deps.sarif') != ''
         with:
           sarif_file: trivy-deps.sarif
@@ -107,12 +107,12 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
 
       - name: Construir la imagen (sin subirla)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: backend
           load: true
@@ -134,7 +134,7 @@ jobs:
           output: trivy-image.sarif
           limit-severities-for-sarif: true
 
-      - uses: github/codeql-action/upload-sarif@v3
+      - uses: github/codeql-action/upload-sarif@v4
         if: always() && hashFiles('trivy-image.sarif') != ''
         with:
           sarif_file: trivy-image.sarif
@@ -150,7 +150,7 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Checkov
         uses: bridgecrewio/checkov-action@v12
@@ -161,7 +161,7 @@ jobs:
           output_format: cli,sarif
           output_file_path: console,checkov.sarif
 
-      - uses: github/codeql-action/upload-sarif@v3
+      - uses: github/codeql-action/upload-sarif@v4
         if: always() && hashFiles('checkov.sarif') != ''
         with:
           sarif_file: checkov.sarif

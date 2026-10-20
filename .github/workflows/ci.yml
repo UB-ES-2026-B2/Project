@@ -27,11 +27,11 @@ jobs:
       frontend: ${{ steps.decide.outputs.frontend }}
       backend_image: ${{ steps.decide.outputs.backend_image }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Solo en PRs. En push a develop/main (después de un merge) y en ejecuciones
       # manuales se lanza todo: "cada merge se compila".
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         id: filter
         if: github.event_name == 'pull_request'
         with:
@@ -95,9 +95,9 @@ jobs:
       SECRET_KEY: ci-no-es-secreto
       CORS_ORIGINS: http://localhost:5173
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -144,7 +144,7 @@ jobs:
             coverage report --format=markdown
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always() && hashFiles('backend/coverage.xml') != ''
         with:
           name: coverage-backend
@@ -158,12 +158,12 @@ jobs:
     if: needs.changes.outputs.backend_image == 'true'
     runs-on: ubuntu-24.04-arm
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
 
       - name: docker build (linux/arm64)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: backend
           platforms: linux/arm64
@@ -179,9 +179,9 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: npm
