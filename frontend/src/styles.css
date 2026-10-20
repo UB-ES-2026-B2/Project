@@ -74,6 +74,118 @@ h1 {
   object-fit: cover;
 }
 
+.favorite-button {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 94%);
+  color: #46534b;
+  cursor: pointer;
+  transition: color 120ms ease, transform 120ms ease;
+}
+
+.favorite-button:hover {
+  transform: scale(1.08);
+}
+
+.favorite-button svg {
+  width: 21px;
+  height: 21px;
+  fill: transparent;
+  stroke: currentColor;
+  stroke-width: 1.8;
+}
+
+.favorite-button--active {
+  color: #dc3f55;
+}
+
+.favorite-button--active svg {
+  fill: currentColor;
+}
+
+.favorite-button:focus-visible,
+.auth-modal button:focus-visible {
+  outline: 3px solid #147b55;
+  outline-offset: 3px;
+}
+
+.favorite-button__error {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 20;
+  max-width: min(360px, calc(100vw - 40px));
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: #9f2525;
+  box-shadow: 0 4px 16px rgb(29 41 35 / 20%);
+  color: #fff;
+  font-size: 14px;
+}
+
+.auth-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(16 24 19 / 55%);
+}
+
+.auth-modal {
+  position: relative;
+  width: min(440px, 100%);
+  padding: 32px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 16px 48px rgb(0 0 0 / 20%);
+}
+
+.auth-modal h2 {
+  margin: 0 32px 12px 0;
+  font-size: 22px;
+}
+
+.auth-modal p {
+  margin: 0 0 24px;
+  color: #788079;
+  line-height: 1.5;
+}
+
+.auth-modal__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #46534b;
+  cursor: pointer;
+  font-size: 25px;
+}
+
+.auth-modal__dismiss {
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: #147b55;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
 .property-card__price-drop {
   position: absolute;
   top: 14px;
