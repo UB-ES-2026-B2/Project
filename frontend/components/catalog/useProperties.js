@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 
+export const PROPERTIES_QUERY_KEY = ['properties'];
+
 function toCardProperty(property) {
   return {
     ...property,
