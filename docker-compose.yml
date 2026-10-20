@@ -1,0 +1,51 @@
+# Desarrollo en local: Postgres + PostGIS y la API con recarga automática.
+#   docker compose up --build
+# Las variables salen del .env de la raíz si existe; si no, de los valores por defecto de aquí.
+name: es-b2
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    # Todo el .env (incluidas las FEATURE_*) llega al contenedor; si no hay .env, no pasa nada.
+    env_file:
+      - path: .env
+        required: false
+    # Valores por defecto si no hay .env (deben coincidir con .env.example).
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://app:app@db:5432/app}
+      MEDIA_BUCKET: ${MEDIA_BUCKET:-es-b2-media-891377256343}
+      MEDIA_BASE_URL: ${MEDIA_BASE_URL:-/media}
+      AWS_REGION: ${AWS_REGION:-eu-west-1}
+      SECRET_KEY: ${SECRET_KEY:-cambiar-en-local}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      # Docker Desktop en Windows/macOS no siempre propaga los eventos de cambio
+      # de ficheros del volumen; con polling la recarga funciona en todos.
+      WATCHFILES_FORCE_POLLING: "true"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+volumes:
+  db-data:

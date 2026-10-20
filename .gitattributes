@@ -1,0 +1,7 @@
+# Normaliza finales de línea en el repo.
+* text=auto
+
+# Los scripts se ejecutan dentro de contenedores Linux o en la EC2:
+# con CRLF fallan ("/bin/sh^M: not found").
+*.sh text eol=lf
+Dockerfile text eol=lf

@@ -1,0 +1,168 @@
+name: Security
+
+# Sec-DevOps "shift-left": análisis de seguridad en cada PR y una vez por semana
+# (las vulnerabilidades nuevas aparecen aunque el código no cambie).
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main] # CodeQL necesita analizar la rama base para comparar las PRs
+  schedule:
+    - cron: "0 6 * * 1" # lunes 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Decide qué análisis tienen sentido según lo que exista en el repo.
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      languages: ${{ steps.detect.outputs.languages }}
+      backend_image: ${{ steps.detect.outputs.backend_image }}
+      terraform: ${{ steps.detect.outputs.terraform }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: detect
+        run: |
+          langs='"actions"'
+          [ -f backend/pyproject.toml ] && langs="$langs,\"python\""
+          [ -f frontend/package.json ] && langs="$langs,\"javascript-typescript\""
+          echo "languages=[$langs]" >> "$GITHUB_OUTPUT"
+          [ -f backend/Dockerfile ] && echo "backend_image=true" >> "$GITHUB_OUTPUT" || echo "backend_image=false" >> "$GITHUB_OUTPUT"
+          [ -d infra/terraform ] && echo "terraform=true" >> "$GITHUB_OUTPUT" || echo "terraform=false" >> "$GITHUB_OUTPUT"
+          cat "$GITHUB_OUTPUT"
+
+  # Análisis estático del código. Los resultados van a la pestaña Security → Code scanning.
+  # Para que un hallazgo alto/crítico bloquee el merge hay que activar la regla
+  # "Require code scanning results" en las reglas de develop y main.
+  codeql:
+    needs: setup
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ${{ fromJSON(needs.setup.outputs.languages) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          queries: security-extended
+
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:${{ matrix.language }}
+
+  # Dependencias con vulnerabilidades conocidas (package-lock.json, requirements, etc.).
+  # Las dependencias de Python del backend se analizan en trivy-image, ya instaladas.
+  trivy-deps:
+    needs: setup
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # Fijada por SHA (no por etiqueta) para que no se rompa ni cambie si se mueven o
+      # borran las etiquetas. Dependabot (ecosistema github-actions) propondrá las
+      # actualizaciones con el SHA nuevo.
+      - name: Trivy (dependencias)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          format: sarif
+          output: trivy-deps.sarif
+          limit-severities-for-sarif: true
+
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always() && hashFiles('trivy-deps.sarif') != ''
+        with:
+          sarif_file: trivy-deps.sarif
+          category: trivy-deps
+
+  # Imagen Docker del backend: paquetes del sistema y librerías de Python instaladas.
+  trivy-image:
+    needs: setup
+    if: needs.setup.outputs.backend_image == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Construir la imagen (sin subirla)
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          load: true
+          push: false
+          tags: es-b2-backend:scan
+          cache-from: type=gha,scope=backend-scan
+          cache-to: type=gha,mode=max,scope=backend-scan
+
+      # Fijada por SHA: ver el comentario en trivy-deps.
+      - name: Trivy (imagen)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: es-b2-backend:scan
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          format: sarif
+          output: trivy-image.sarif
+          limit-severities-for-sarif: true
+
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always() && hashFiles('trivy-image.sarif') != ''
+        with:
+          sarif_file: trivy-image.sarif
+          category: trivy-image
+
+  # Configuración insegura en Terraform. Las excepciones justificadas van en
+  # infra/terraform/.checkov.yaml y en docs/decisiones.md.
+  checkov:
+    needs: setup
+    if: needs.setup.outputs.terraform == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: infra/terraform
+          config_file: infra/terraform/.checkov.yaml
+          quiet: true
+          output_format: cli,sarif
+          output_file_path: console,checkov.sarif
+
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always() && hashFiles('checkov.sarif') != ''
+        with:
+          sarif_file: checkov.sarif
+          category: checkov
