@@ -1,4 +1,5 @@
 import { useRef, useState, type KeyboardEvent, type SyntheticEvent, type TouchEvent } from 'react';
+import FavoriteButton from './FavoriteButton';
 
 export type Property = {
   id: string;
@@ -10,16 +11,24 @@ export type Property = {
   bathrooms: number;
   area: number;
   images: string[];
+  isFavorite?: boolean;
 };
 
 type PropertyCardProps = {
   property: Property;
   onSelect?: (property: Property) => void;
+  isAuthenticated?: boolean;
+  onRequireAuth?: () => void;
 };
 
 const PLACEHOLDER_IMAGE = '/assets/property-placeholder.webp';
 
-function PropertyCard({ property, onSelect }: PropertyCardProps) {
+function PropertyCard({
+  property,
+  onSelect,
+  isAuthenticated = false,
+  onRequireAuth,
+}: PropertyCardProps) {
   const [imageIndex, setImageIndex] = useState(0);
   const touchStartX = useRef<number | null>(null);
   const image = property.images[imageIndex] ?? PLACEHOLDER_IMAGE;
@@ -76,6 +85,12 @@ function PropertyCard({ property, onSelect }: PropertyCardProps) {
           src={image}
           alt={`${property.title} - imagen ${imageIndex + 1}`}
           onError={handleImageError}
+        />
+        <FavoriteButton
+          propertyId={property.id}
+          isFavorite={property.isFavorite ?? false}
+          isAuthenticated={isAuthenticated}
+          onRequireAuth={onRequireAuth}
         />
         {hasPriceDrop && (
           <span className="property-card__price-drop">Bajada de precio</span>
