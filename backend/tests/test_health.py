@@ -4,6 +4,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from app.core.config import get_settings
 from app.main import app, get_engine
 
 client = TestClient(app)
@@ -12,8 +13,10 @@ client = TestClient(app)
 @pytest.fixture(autouse=True)
 def _reset_engine():
     get_engine.cache_clear()
+    get_settings.cache_clear()
     yield
     get_engine.cache_clear()
+    get_settings.cache_clear()
 
 
 def test_health_ok() -> None:
