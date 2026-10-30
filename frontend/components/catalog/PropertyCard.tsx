@@ -30,8 +30,12 @@ function PropertyCard({
   onRequireAuth,
 }: PropertyCardProps) {
   const [imageIndex, setImageIndex] = useState(0);
+  const [imageFailed, setImageFailed] = useState(false);
+  const [placeholderFailed, setPlaceholderFailed] = useState(false);
   const touchStartX = useRef<number | null>(null);
-  const image = property.images[imageIndex] ?? PLACEHOLDER_IMAGE;
+  const image = imageFailed
+    ? PLACEHOLDER_IMAGE
+    : property.images[imageIndex] ?? PLACEHOLDER_IMAGE;
   const hasPriceDrop = property.previousPrice !== undefined && property.previousPrice > property.price;
 
   const changeImage = (direction: number) => {
@@ -39,15 +43,16 @@ function PropertyCard({
     setImageIndex((currentIndex) => (
       (currentIndex + direction + property.images.length) % property.images.length
     ));
+    setImageFailed(false);
   };
 
   const handleImageError = (event: SyntheticEvent<HTMLImageElement>) => {
     const imageElement = event.currentTarget;
     if (imageElement.getAttribute('src') === PLACEHOLDER_IMAGE) {
-      imageElement.hidden = true;
+      setPlaceholderFailed(true);
       return;
     }
-    imageElement.src = PLACEHOLDER_IMAGE;
+    setImageFailed(true);
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
@@ -85,6 +90,7 @@ function PropertyCard({
           src={image}
           alt={`${property.title} - imagen ${imageIndex + 1}`}
           onError={handleImageError}
+          hidden={image === PLACEHOLDER_IMAGE && placeholderFailed}
         />
         <FavoriteButton
           propertyId={property.id}
