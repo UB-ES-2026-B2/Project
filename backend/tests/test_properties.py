@@ -28,9 +28,6 @@ def override_get_db() -> Generator[Session, None, None]:
         db.close()
 
 
-app.dependency_overrides[get_db] = override_get_db
-
-
 async def get(path: str):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -39,10 +36,13 @@ async def get(path: str):
 
 @pytest.fixture(autouse=True)
 def clear_properties() -> Generator[None, None, None]:
+    previous_overrides = app.dependency_overrides.copy()
+    app.dependency_overrides[get_db] = override_get_db
     with TestingSession() as db:
         db.query(Property).delete()
         db.commit()
     yield
+    app.dependency_overrides = previous_overrides
 
 
 def test_list_properties_is_paginated() -> None:
