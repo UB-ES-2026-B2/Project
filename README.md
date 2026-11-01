@@ -18,6 +18,7 @@ Proyecto de Ingeniería del Software (UB), Grupo B2. Búsqueda de inmuebles con 
 | [docs/definition-of-done.md](docs/definition-of-done.md) | Cuándo una historia está terminada |
 | [docs/arquitectura.md](docs/arquitectura.md) | Cómo se despliega y por dónde pasan las peticiones |
 | [docs/decisiones.md](docs/decisiones.md) | Decisiones que se apartan de las diapositivas y por qué |
+| [AGENTS.md](AGENTS.md) | Instrucciones para agentes de IA |
 
 ## Requisitos
 

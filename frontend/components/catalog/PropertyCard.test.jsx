@@ -54,6 +54,27 @@ describe('PropertyCard', () => {
     fireEvent.error(image);
 
     expect(image).toHaveAttribute('src', '/assets/property-placeholder.webp');
+    expect(image).toBeVisible();
+  });
+
+  it('hides the image if the placeholder also fails to load', () => {
+    renderWithQueryClient(<PropertyCard property={property} />);
+    const image = screen.getByAltText('Piso de prueba - imagen 1');
+
+    fireEvent.error(image);
+    fireEvent.error(image);
+
+    expect(image).toHaveAttribute('src', '/assets/property-placeholder.webp');
+    expect(image).not.toBeVisible();
+  });
+
+  it('clears the failed-image state when changing gallery images', () => {
+    renderWithQueryClient(<PropertyCard property={property} />);
+    fireEvent.error(screen.getByAltText('Piso de prueba - imagen 1'));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver imagen siguiente' }));
+
+    expect(screen.getByAltText('Piso de prueba - imagen 2')).toHaveAttribute('src', '/second.webp');
   });
 
   it('renders an animated loading skeleton with a fixed gallery ratio', () => {
