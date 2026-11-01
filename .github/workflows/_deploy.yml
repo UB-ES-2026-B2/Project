@@ -44,7 +44,7 @@ jobs:
       name: ${{ inputs.environment }}
       url: ${{ inputs.url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: ¿Hay algo que desplegar?
         id: check
@@ -61,7 +61,7 @@ jobs:
             echo "deploy=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: steps.check.outputs.deploy == 'true'
         with:
           node-version: 20
@@ -75,7 +75,7 @@ jobs:
           npm ci
           npm run build
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v6
         if: steps.check.outputs.deploy == 'true'
         with:
           role-to-assume: ${{ env.AWS_ROLE }}
