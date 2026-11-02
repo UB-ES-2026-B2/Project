@@ -13,8 +13,16 @@ export default defineConfig({
     setupFiles: './test-setup.js',
     coverage: {
       reporter: ['text', 'json-summary'],
-      include: ['**/*.jsx'],
+      include: ['**/*.{jsx,tsx}'],
       exclude: ['**/main.jsx'],
+      thresholds: {
+        'src/pages/auth/RegisterForm.tsx': {
+          lines: 60,
+          functions: 60,
+          branches: 60,
+          statements: 60,
+        },
+      },
     },
   },
 });

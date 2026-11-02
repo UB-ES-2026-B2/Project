@@ -1,10 +1,21 @@
 import { useState } from 'react';
 import PropertyCard, { PropertyCardSkeleton } from '../components/catalog/PropertyCard.tsx';
 import useProperties from '../components/catalog/useProperties.js';
+import { useAuth } from './context/AuthContext.tsx';
 import AuthModal from './AuthModal.jsx';
+import RegisterPage from './pages/auth/RegisterPage.tsx';
 
 function App() {
+  if (window.location.pathname === '/register') {
+    return <RegisterPage />;
+  }
+
+  return <PropertyCatalog />;
+}
+
+function PropertyCatalog() {
   const { properties, isLoading } = useProperties();
+  const { isAuthenticated } = useAuth();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   return (
@@ -20,7 +31,7 @@ function App() {
             <PropertyCard
               key={property.id}
               property={property}
-              isAuthenticated={false}
+              isAuthenticated={isAuthenticated}
               onRequireAuth={() => setIsAuthModalOpen(true)}
             />
           ))}
