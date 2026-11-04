@@ -12,11 +12,11 @@ name = "es-b2-backend"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
-  "fastapi>=0.143.3",
+  "fastapi>=0.162.0",
   "uvicorn[standard]>=0.30",
   "pydantic-settings>=2.16.2",
   "sqlalchemy>=2.1.6",
-  "psycopg[binary]>=3.2",
+  "psycopg[binary]>=3.3.6",
   "alembic>=1.13",
   "passlib[bcrypt]>=1.7.4,<1.8",
   # mantenim una versio de bcrypt compatible amb passlib
