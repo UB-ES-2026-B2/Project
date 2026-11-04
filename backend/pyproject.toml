@@ -16,7 +16,7 @@ dependencies = [
   "uvicorn[standard]>=0.30",
   "pydantic-settings>=2.16.2",
   "sqlalchemy>=2.1.6",
-  "psycopg[binary]>=3.2",
+  "psycopg[binary]>=3.3.6",
   "alembic>=1.13",
   "passlib[bcrypt]>=1.7.4,<1.8",
   # mantenim una versio de bcrypt compatible amb passlib
