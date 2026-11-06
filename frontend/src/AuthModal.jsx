@@ -18,7 +18,8 @@ function AuthModal({ onClose }) {
         </button>
         <h2 id="auth-modal-title">Inicia sesión para guardar favoritos</h2>
         <p>Puedes crear una cuenta para empezar a guardar tus inmuebles favoritos.</p>
-        <a className="auth-modal__register" href="/register">Crear una cuenta</a>
+        <a className="auth-modal__register" href="/login">Iniciar sesión</a>
+        <a className="auth-modal__secondary" href="/register">Crear una cuenta</a>
         <button className="auth-modal__dismiss" type="button" onClick={onClose}>
           Entendido
         </button>
