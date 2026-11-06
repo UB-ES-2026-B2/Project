@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
 import useProperties from '../components/catalog/useProperties.js';
+import { AuthProvider } from './context/AuthContext.tsx';
 import App from './App.jsx';
 
 vi.mock('../components/catalog/useProperties.js', () => ({
@@ -14,7 +15,9 @@ function renderApp() {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <App />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </QueryClientProvider>,
   );
 }
