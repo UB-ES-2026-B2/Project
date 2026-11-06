@@ -37,3 +37,19 @@ class RegisterResponse(BaseModel):
     access_token: str
     token_type: Literal["bearer"] = "bearer"
     user: UserResponse
+
+
+class LoginRequest(BaseModel):
+    """Credenciales del login en JSON (también se aceptan como formulario OAuth2)."""
+
+    email: EmailStr = Field(max_length=254)
+    password: str = Field(min_length=1, max_length=128, repr=False)
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return value.lower()
+
+
+class LoginResponse(RegisterResponse):
+    """Misma forma que la respuesta del registro: token Bearer y datos públicos del usuario."""
