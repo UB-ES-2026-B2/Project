@@ -96,4 +96,21 @@ describe('initial screen', () => {
     });
     expect(screen.getByRole('dialog')).toHaveTextContent('Inicia sesión para guardar favoritos');
   });
+
+  it('shows the login page on /login', () => {
+    useProperties.mockReturnValue({ properties: [], isLoading: false });
+    window.history.pushState(null, '', '/login');
+    renderApp();
+
+    expect(screen.getByRole('heading', { name: 'Iniciar sesión' })).toBeInTheDocument();
+    window.history.pushState(null, '', '/');
+  });
+
+  it('shows the account menu in the header', () => {
+    useProperties.mockReturnValue({ properties: [], isLoading: false });
+    renderApp();
+
+    expect(screen.getByRole('navigation', { name: 'Cuenta' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login');
+  });
 });

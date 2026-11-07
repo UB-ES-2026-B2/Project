@@ -22,6 +22,19 @@ export default defineConfig({
           branches: 60,
           statements: 60,
         },
+        // US 4.2.2: persistencia de la sesión y logout con cobertura >= 60 %.
+        'src/context/AuthContext.tsx': {
+          lines: 60,
+          functions: 60,
+          branches: 60,
+          statements: 60,
+        },
+        'src/pages/auth/LoginForm.tsx': {
+          lines: 60,
+          functions: 60,
+          branches: 60,
+          statements: 60,
+        },
       },
     },
   },

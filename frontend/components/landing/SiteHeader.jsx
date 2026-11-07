@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../src/context/AuthContext.tsx';
+import UserMenu from '../../src/components/UserMenu.tsx';
 import { MenuIcon, UserIcon } from './icons.jsx';
 
 const LINKS = [
@@ -53,14 +54,11 @@ function SiteHeader() {
             </ul>
           </nav>
           <div className="site-header__actions">
-            {isAuthenticated ? (
+            <UserMenu />
+            {isAuthenticated && (
               <span className="site-header__user-icon" role="img" aria-label="Sesión iniciada">
                 <UserIcon />
               </span>
-            ) : (
-              <a className="button button--ghost" href="/register" onClick={closeMenu}>
-                Crear cuenta
-              </a>
             )}
             <a className="button button--accent" href="#destacados" onClick={closeMenu}>
               Explorar anuncios
