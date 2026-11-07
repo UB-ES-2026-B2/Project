@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
 import useProperties from '../components/catalog/useProperties.js';
+import { AuthProvider } from './context/AuthContext.tsx';
 import App from './App.jsx';
 
 vi.mock('../components/catalog/useProperties.js', () => ({
@@ -14,7 +15,9 @@ function renderApp() {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <App />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </QueryClientProvider>,
   );
 }
@@ -70,5 +73,22 @@ describe('initial screen', () => {
       pendingFavoriteId: 'test-home',
     });
     expect(screen.getByRole('dialog')).toHaveTextContent('Inicia sesión para guardar favoritos');
+  });
+
+  it('shows the login page on /login', () => {
+    useProperties.mockReturnValue({ properties: [], isLoading: false });
+    window.history.pushState(null, '', '/login');
+    renderApp();
+
+    expect(screen.getByRole('heading', { name: 'Iniciar sesión' })).toBeInTheDocument();
+    window.history.pushState(null, '', '/');
+  });
+
+  it('shows the account menu in the header', () => {
+    useProperties.mockReturnValue({ properties: [], isLoading: false });
+    renderApp();
+
+    expect(screen.getByRole('navigation', { name: 'Cuenta' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login');
   });
 });
