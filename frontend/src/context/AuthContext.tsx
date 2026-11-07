@@ -156,7 +156,7 @@ async function runPendingFavorite(queryClient: QueryClient | undefined) {
   try {
     const { pendingFavoriteId } = JSON.parse(raw) as { pendingFavoriteId?: unknown };
     if (typeof pendingFavoriteId !== 'string' || !pendingFavoriteId) return;
-    await apiFetch(`/api/properties/${encodeURIComponent(pendingFavoriteId)}/favorite`, {
+    await apiFetch(`/api/v1/favorites/${encodeURIComponent(pendingFavoriteId)}`, {
       method: 'POST',
     });
     await queryClient?.invalidateQueries({ queryKey: ['properties'] });
