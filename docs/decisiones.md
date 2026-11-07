@@ -95,3 +95,15 @@ Aquí está cada decisión que se aparta de las diapositivas de la asignatura (C
 - **Decisión:** las condiciones de confianza de los roles de AWS usan ese formato. En Terraform va en la variable `github_oidc_subject_prefix`; el nombre legible (`UB-ES-2026-B2/Project`) solo aparece en textos como las descripciones.
 - **Por qué:** los IDs no cambian aunque se renombre la org o el repo, y evitan que un repo nuevo con el mismo nombre pueda asumir nuestros roles.
 - **Ojo:** si el repo se **recrea** (ID nuevo) o cambia el formato del `sub`, hay que actualizar el prefijo en `variables.tf`, en `infra/bootstrap/` y en AWS. Los IDs salen de `gh api repos/UB-ES-2026-B2/Project --jq '.owner.id, .id'`.
+
+## D11 · Backend en la EC2: PostGIS arm64 de `imresamu` e imagen construida en la propia EC2
+
+*Noviembre 2026*
+
+- **Contexto:** la EC2 es una t4g.micro (arm64). La imagen oficial `postgis/postgis` solo se publica para amd64. Además, una imagen subida a `ghcr.io` con el `GITHUB_TOKEN` es privada por defecto y la EC2 necesitaría credenciales para descargarla.
+- **Decisión:**
+  - Postgres de la EC2: `imresamu/postgis:16-3.4`, la misma versión (16 + PostGIS 3.4) con imagen arm64. En local se sigue usando `postgis/postgis:16-3.4`.
+  - El despliegue no usa ningún registro: GitHub Actions pide por SSM a la EC2 que ejecute `infra/ec2/build-and-deploy.sh <entorno> <sha>`. La EC2 descarga ese commit del repo público, construye la imagen y la arranca con `infra/ec2/deploy.sh` (health check y rollback a `.last-good`).
+- **Por qué:** no hay credenciales de registro guardadas en la EC2 ni en SSM. La imagen ya se valida en la CI (job `backend-image`, linux/arm64) antes del merge.
+- **Coste:** cada despliegue tarda unos minutos más porque la t4g.micro construye la imagen. Si algún día molesta, se publica la imagen en `ghcr.io` como pública y `build-and-deploy.sh` pasa a hacer `docker pull` (`deploy.sh` ya lo soporta sin `SKIP_PULL`).
+
