@@ -58,3 +58,9 @@ updates:
       day: monday
     commit-message:
       prefix: build(docker)
+    # Solo parches de Python 3.12 (3.12.x). Cambiar de versión de Python (3.13, 3.15…)
+    # se decide en equipo y se hace a mano, porque también hay que cambiar la CI
+    # (que ejecuta los tests con 3.12) y probarlo. Ver la PR #12.
+    ignore:
+      - dependency-name: python
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
