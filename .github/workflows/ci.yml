@@ -189,6 +189,8 @@ jobs:
 
       - run: npm ci
       - run: npm run lint
+      # El build de Vite no comprueba tipos: sin este paso un error de TypeScript pasaría el CI.
+      - run: npm run typecheck
       # Según el acuerdo, `npm test` ejecuta vitest sin watch y con cobertura.
       - run: npm test
       - run: npm run build
