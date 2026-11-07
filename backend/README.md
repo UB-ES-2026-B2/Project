@@ -10,6 +10,7 @@ API mínima del portal inmobiliario, construida con FastAPI y PostgreSQL/PostGIS
 - `POST /api/auth/register` registra un usuario y devuelve su JWT de acceso.
 - `POST /api/auth/login` inicia sesión con email y contraseña y devuelve un JWT nuevo.
 - `GET /api/auth/me` devuelve el usuario del token `Authorization: Bearer <jwt>`.
+- `POST` / `DELETE /api/v1/favorites/{property_id}` guarda o quita un favorito y `GET /api/v1/favorites` lista los del usuario (requieren token).
 - La configuración llega por variables de entorno; no se guardan secretos en el código.
 
 La estructura y el alcance del primer vertical están explicados en
@@ -113,6 +114,19 @@ curl -s http://localhost:8000/api/auth/me -H "Authorization: Bearer <access_toke
 - El token caduca a los `ACCESS_TOKEN_EXPIRE_MINUTES` minutos. Para proteger otra ruta,
   añade el parámetro `user: CurrentUser` (de `app.api.routes.auth`).
 - Sin `SECRET_KEY` configurada, login y `/me` devuelven `503`.
+
+## Favoritos
+
+Requieren `Authorization: Bearer <access_token>` (sin token o con uno no válido: `401`).
+
+| Método y ruta | Respuesta |
+|---|---|
+| `POST /api/v1/favorites/{property_id}` | `201`. Si ya estaba guardado también `201` (no se duplica) |
+| `DELETE /api/v1/favorites/{property_id}` | `204`. Si no estaba guardado también `204` |
+| `GET /api/v1/favorites` | `200` `{"property_ids": [3, 1]}`, del más reciente al más antiguo |
+
+Si el inmueble no existe: `404`. Al borrar un usuario o un inmueble se borran sus favoritos
+(`ON DELETE CASCADE`, migración `003_create_favorites`).
 
 Las pruebas de autenticación usan PostgreSQL con transacciones que se revierten al
 terminar cada prueba; no borran los usuarios locales. Con la base de datos levantada:
