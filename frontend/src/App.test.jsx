@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import useProperties from '../components/catalog/useProperties.js';
 import { AuthProvider } from './context/AuthContext.tsx';
 import App from './App.jsx';
@@ -23,7 +23,10 @@ function renderApp() {
 }
 
 describe('initial screen', () => {
-  it('shows the Barcelona homes heading', () => {
+  afterEach(() => localStorage.removeItem('access_token'));
+
+  it('shows the landing page sections without a search form', () => {
+    localStorage.removeItem('access_token');
     useProperties.mockReturnValue({
       properties: [{
         id: 'test-home',
@@ -39,8 +42,27 @@ describe('initial screen', () => {
     });
     renderApp();
 
-    expect(screen.getByText('HOGARES EN BARCELONA')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Encuentra tu próximo hogar' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', {
+      name: 'Encuentra el espacio donde empieza tu próximo capítulo',
+    })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Anuncios destacados' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Explora por tipo de espacio' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Cómo funciona' })).toBeInTheDocument();
+    expect(screen.queryByRole('search')).not.toBeInTheDocument();
+    expect(screen.getByText('Piso de prueba')).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Crear cuenta' })).toHaveLength(2);
+    expect(screen.queryByRole('img', { name: 'Sesión iniciada' })).not.toBeInTheDocument();
+  });
+
+  it('replaces the create-account link with a user icon when signed in', () => {
+    localStorage.setItem('access_token', 'test-token');
+    useProperties.mockReturnValue({ properties: [], isLoading: false });
+
+    renderApp();
+
+    expect(screen.getByRole('img', { name: 'Sesión iniciada' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Crear cuenta' })).not.toBeInTheDocument();
+    localStorage.removeItem('access_token');
   });
 
   it('shows loading skeletons while properties are loading', () => {
