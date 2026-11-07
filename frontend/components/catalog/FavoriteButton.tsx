@@ -28,7 +28,7 @@ function FavoriteButton({
     mutationFn: async ({ propertyId: id, nextFavorite }: FavoriteMutation) => {
       // apiFetch añade la cabecera Authorization: Bearer <token> (US 4.2.2).
       const response = await apiFetch(
-        `/api/properties/${encodeURIComponent(id)}/favorite`,
+        `/api/v1/favorites/${encodeURIComponent(id)}`,
         { method: nextFavorite ? 'POST' : 'DELETE' },
       );
       if (!response.ok) throw new Error('No se pudo actualizar el favorito.');

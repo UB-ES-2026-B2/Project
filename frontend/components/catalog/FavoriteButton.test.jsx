@@ -77,12 +77,12 @@ describe('FavoriteButton', () => {
 
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
-      '/api/properties/test-home/favorite',
+      '/api/v1/favorites/test-home',
       { method: 'POST' },
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
-      '/api/properties/test-home/favorite',
+      '/api/v1/favorites/test-home',
       { method: 'DELETE' },
     );
   });
