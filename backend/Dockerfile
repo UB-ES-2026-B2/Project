@@ -15,8 +15,10 @@ WORKDIR /build
 # Solo pyproject.toml: la capa de dependencias se reutiliza mientras no cambien,
 # aunque cambie el código.
 COPY pyproject.toml .
+# pip se desinstala al final: no hace falta para ejecutar la app y no debe acabar en el runtime.
 RUN python -c "import tomllib; print('\n'.join(tomllib.load(open('pyproject.toml', 'rb'))['project']['dependencies']))" > requirements.txt \
-    && pip install -r requirements.txt
+    && pip install -r requirements.txt \
+    && pip uninstall -y pip
 
 # --- runtime ---
 FROM python:3.12-slim AS runtime
@@ -25,7 +27,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH="/opt/venv/bin:$PATH"
 
-RUN useradd --create-home --uid 1000 app
+# Parches de seguridad de Debian publicados después de la imagen base, y sin pip:
+# la app no lo usa en ejecución y sus vulnerabilidades hacían fallar Trivy.
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/* \
+    && python -m pip uninstall -y pip \
+    && useradd --create-home --uid 1000 app
 
 COPY --from=builder /opt/venv /opt/venv
 COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
