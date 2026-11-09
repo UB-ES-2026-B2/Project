@@ -5,13 +5,12 @@ from datetime import UTC, datetime
 import jwt
 import pytest
 from fastapi.testclient import TestClient
-from passlib.hash import bcrypt
 from sqlalchemy import create_engine, func, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings, get_settings
-from app.core.security import create_access_token
+from app.core.security import create_access_token, verify_password
 from app.db.session import get_db
 from app.main import app
 from app.models.user import User
@@ -85,8 +84,8 @@ def test_register_returns_public_user_and_signed_token(client: TestClient, db: S
     user = db.scalar(select(User).where(User.id == body["user"]["id"]))
     assert user is not None
     assert user.hashed_password != PAYLOAD["password"]
-    assert bcrypt.verify(PAYLOAD["password"], user.hashed_password)
-    assert not bcrypt.verify("contrasenya-incorrecta", user.hashed_password)
+    assert verify_password(PAYLOAD["password"], user.hashed_password)
+    assert not verify_password("contrasenya-incorrecta", user.hashed_password)
     assert user.hashed_password not in response.text
 
 

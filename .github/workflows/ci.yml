@@ -183,7 +183,8 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          # Node 24 (LTS). Node 20 ya no tiene soporte y jsdom >= 31 exige Node >= 22.22.
+          node-version: 24
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
