@@ -5,12 +5,15 @@ import HowItWorks from '../../components/landing/HowItWorks.jsx';
 import SiteFooter from '../../components/landing/SiteFooter.jsx';
 import SiteHeader from '../../components/landing/SiteHeader.jsx';
 import SpaceTypeGrid from '../../components/landing/SpaceTypeGrid.jsx';
+import LocationSearchBar from '../components/search/LocationSearchBar.tsx';
 import { useAuth } from '../context/AuthContext.tsx';
 import AuthModal from '../AuthModal.jsx';
 
 function HomePage() {
-  const { properties, isLoading } = useProperties();
   const { isAuthenticated } = useAuth();
+  // US 1.3.2: la ubicación elegida en el buscador filtra los anuncios (location_id).
+  const [location, setLocation] = useState(null);
+  const { properties, isLoading } = useProperties(location?.id ?? null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   return (
@@ -56,6 +59,8 @@ function HomePage() {
               </p>
             </div>
 
+            <LocationSearchBar onLocationChange={setLocation} />
+
             {isLoading && (
               <div className="home-listing-grid">
                 {Array.from({ length: 3 }, (_, index) => (
@@ -77,7 +82,13 @@ function HomePage() {
               </div>
             )}
 
-            {!isLoading && properties.length === 0 && (
+            {!isLoading && properties.length === 0 && location && (
+              <p className="catalog-empty" role="status">
+                No hay inmuebles disponibles en {location.name} por ahora.
+              </p>
+            )}
+
+            {!isLoading && properties.length === 0 && !location && (
               <div className="home-empty-state">
                 <h3>Aún no hay anuncios disponibles</h3>
                 <p>Vuelve pronto para descubrir nuevos espacios.</p>
