@@ -11,6 +11,8 @@ API mínima del portal inmobiliario, construida con FastAPI y PostgreSQL/PostGIS
 - `POST /api/auth/login` inicia sesión con email y contraseña y devuelve un JWT nuevo.
 - `GET /api/auth/me` devuelve el usuario del token `Authorization: Bearer <jwt>`.
 - `POST` / `DELETE /api/v1/favorites/{property_id}` guarda o quita un favorito y `GET /api/v1/favorites` lista los del usuario (requieren token).
+- `GET /api/v1/locations/suggest?q=...` sugiere ciudades, barrios y códigos postales para el buscador.
+- `GET /api/v1/properties?location_id=...` filtra el catálogo por una de esas ubicaciones.
 - La configuración llega por variables de entorno; no se guardan secretos en el código.
 
 La estructura y el alcance del primer vertical están explicados en
@@ -136,3 +138,26 @@ alembic upgrade head
 alembic heads
 pytest --cov=app
 ```
+
+## Autocompletado de ubicaciones (US 1.3.1)
+
+`GET /api/v1/locations/suggest?q=gra` devuelve hasta 10 ubicaciones cuyo nombre contiene
+`q`, sin distinguir mayúsculas ni acentos. Primero salen las que empiezan por `q`:
+
+```json
+[{"id": "5", "name": "Gràcia", "type": "neighborhood"}]
+```
+
+- `type` es `city`, `neighborhood` o `postal_code`.
+- Con menos de 3 caracteres (sin contar espacios) responde `200 []`, porque el buscador llama
+  mientras se escribe. Sin `q` o con más de 100 caracteres: `422`.
+- El `id` se pasa a `GET /api/v1/properties?location_id=<id>`. Una ciudad incluye los inmuebles
+  de todos sus barrios y códigos postales; un barrio o un código postal, solo los suyos. Un id
+  que no existe devuelve una página vacía.
+
+La migración `004_create_locations` crea la tabla `locations` (con `parent_id` hacia la
+ciudad), las columnas `neighborhood_id` y `postal_code_id` de `properties`, las extensiones
+`pg_trgm` y `unaccent`, y el índice GIN `ix_locations_name_trgm`. También carga Barcelona,
+sus barrios L'Eixample, Gràcia y Sants, y sus códigos postales, y enlaza con ellos los tres
+inmuebles de ejemplo. Los tests de este endpoint necesitan PostgreSQL (SQLite no tiene
+`unaccent` ni `pg_trgm`) e incluyen uno que mide la latencia con 5000 ubicaciones.
