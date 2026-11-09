@@ -1,0 +1,56 @@
+# Staging y producción en la EC2. Un proyecto de Compose por entorno, cada uno con su
+# Postgres, su volumen y su puerto. No se usa a mano: lo lanza infra/ec2/deploy.sh,
+# que exporta APP_ENV, API_PORT, API_IMAGE, POSTGRES_PASSWORD y SECRET_KEY (de SSM).
+#   prod    -> es-b2-prod,    puerto 8000
+#   staging -> es-b2-staging, puerto 8001
+
+x-logging: &logging
+  driver: awslogs
+  options:
+    awslogs-region: eu-west-1
+    awslogs-group: /es-b2/${APP_ENV:?}
+    awslogs-create-group: "true"
+    tag: "{{.Name}}"
+
+services:
+  db:
+    # postgis/postgis solo publica imágenes amd64; esta es la misma versión (16-3.4)
+    # con imagen arm64 para la t4g. Ver docs/decisiones.md.
+    image: imresamu/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      POSTGRES_DB: app
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    logging: *logging
+
+  api:
+    image: ${API_IMAGE:?}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    # Feature flags del entorno (FEATURE_*=true/false), si existe el fichero.
+    env_file:
+      - path: /opt/app/${APP_ENV}/flags.env
+        required: false
+    environment:
+      APP_ENV: ${APP_ENV}
+      DATABASE_URL: postgresql+psycopg://app:${POSTGRES_PASSWORD}@db:5432/app
+      MEDIA_BUCKET: es-b2-media-891377256343
+      MEDIA_BASE_URL: /media
+      AWS_REGION: eu-west-1
+      SECRET_KEY: ${SECRET_KEY:?}
+    ports:
+      - "${API_PORT:?}:8000"
+    logging: *logging
+
+volumes:
+  db-data:
