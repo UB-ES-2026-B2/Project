@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Property } from './PropertyCard.tsx';
 import { PROPERTIES_QUERY_KEY } from './useProperties.js';
+import { apiFetch } from '../../src/api/client';
 
 type FavoriteButtonProps = {
   propertyId: string;
@@ -25,7 +26,8 @@ function FavoriteButton({
   const [error, setError] = useState(false);
   const mutation = useMutation({
     mutationFn: async ({ propertyId: id, nextFavorite }: FavoriteMutation) => {
-      const response = await fetch(
+      // apiFetch añade la cabecera Authorization: Bearer <token> (US 4.2.2).
+      const response = await apiFetch(
         `/api/properties/${encodeURIComponent(id)}/favorite`,
         { method: nextFavorite ? 'POST' : 'DELETE' },
       );
