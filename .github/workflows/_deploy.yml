@@ -24,6 +24,16 @@ on:
         required: false
         type: string
         default: ""
+      app_env:
+        description: Nombre del entorno en la EC2 (prod o staging); proyecto Compose es-b2-<app_env>
+        required: false
+        type: string
+        default: ""
+      ec2_instance:
+        description: ID de la EC2 del backend. Vacío = el entorno aún no tiene backend, se salta.
+        required: false
+        type: string
+        default: ""
 
 permissions:
   id-token: write # OIDC con AWS
@@ -34,7 +44,102 @@ env:
   AWS_ROLE: arn:aws:iam::891377256343:role/es-b2-github-deploy
 
 jobs:
+  # El backend va primero: si falla (y deploy.sh vuelve a la versión anterior), no se publica
+  # un frontend que podría depender de endpoints nuevos.
+  backend:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ inputs.url }}
+    steps:
+      - name: ¿Hay backend que desplegar?
+        id: check
+        env:
+          INSTANCE: ${{ inputs.ec2_instance }}
+        run: |
+          if [ -z "$INSTANCE" ]; then
+            echo "::warning::El entorno ${{ inputs.environment }} todavía no tiene EC2 de backend; no se despliega."
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        if: steps.check.outputs.deploy == 'true'
+        with:
+          role-to-assume: ${{ env.AWS_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # La EC2 descarga este commit, construye la imagen y ejecuta infra/ec2/deploy.sh
+      # (health check y rollback a .last-good). Sin SSH ni claves: solo SSM Run Command.
+      - name: Desplegar en la EC2 (SSM)
+        if: steps.check.outputs.deploy == 'true'
+        env:
+          INSTANCE: ${{ inputs.ec2_instance }}
+          APP_ENV: ${{ inputs.app_env }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          PARAMS="$(jq -nc --arg env "$APP_ENV" --arg sha "$SHA" '{
+            commands: [
+              "set -euo pipefail",
+              "F=$(mktemp)",
+              "curl -fsSL --retry 3 -o \"$F\" https://raw.githubusercontent.com/UB-ES-2026-B2/Project/\($sha)/infra/ec2/build-and-deploy.sh",
+              "bash \"$F\" \($env) \($sha)"
+            ],
+            executionTimeout: ["1500"]
+          }')"
+          CMD_ID="$(aws ssm send-command \
+            --instance-ids "$INSTANCE" \
+            --document-name AWS-RunShellScript \
+            --comment "deploy ${APP_ENV} ${SHA::7}" \
+            --parameters "$PARAMS" \
+            --query Command.CommandId --output text)"
+          echo "Comando SSM: $CMD_ID"
+
+          # Hasta 25 minutos: construir la imagen en la t4g.micro tarda unos minutos.
+          STATUS=Pending
+          for _ in $(seq 1 100); do
+            sleep 15
+            STATUS="$(aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE" \
+              --query Status --output text 2>/dev/null || echo Pending)"
+            case "$STATUS" in
+              Pending | InProgress | Delayed) ;;
+              *) break ;;
+            esac
+          done
+
+          echo "::group::Salida de la EC2"
+          aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE" \
+            --query StandardOutputContent --output text || true
+          aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE" \
+            --query StandardErrorContent --output text >&2 || true
+          echo "::endgroup::"
+
+          if [ "$STATUS" != "Success" ]; then
+            echo "::error::El despliegue del backend ha terminado en $STATUS (si deploy.sh hizo rollback, sigue la versión anterior)."
+            exit 1
+          fi
+
+      - name: Comprobar /api/health desde fuera
+        if: steps.check.outputs.deploy == 'true' && inputs.url != ''
+        env:
+          URL: ${{ inputs.url }}
+        run: |
+          for _ in $(seq 1 10); do
+            if curl -fsS --max-time 5 "$URL/api/health" | grep -q '"ok"'; then
+              echo "OK: $URL/api/health"
+              exit 0
+            fi
+            sleep 6
+          done
+          echo "::error::$URL/api/health no responde a través de CloudFront"
+          exit 1
+
   frontend:
+    needs: backend
+    # Si el backend se ha saltado (entorno sin EC2) el frontend sigue; si ha fallado, no.
+    if: ${{ !failure() && !cancelled() }}
     runs-on: ubuntu-latest
     # Con environment, el token OIDC lleva
     # sub=repo:UB-ES-2026-B2@335691788/Project@1407787603:environment:<nombre>
@@ -75,7 +180,7 @@ jobs:
           npm ci
           npm run build
 
-      - uses: aws-actions/configure-aws-credentials@v6
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         if: steps.check.outputs.deploy == 'true'
         with:
           role-to-assume: ${{ env.AWS_ROLE }}
@@ -96,9 +201,3 @@ jobs:
             --distribution-id "${DISTRIBUTION}" \
             --paths "/*" \
             --query 'Invalidation.Id' --output text
-
-  # backend: pendiente de que exista la EC2 (ver docs/arquitectura.md, "Backend").
-  #   1. Imagen arm64 en ubuntu-24.04-arm -> ghcr.io/ub-es-2026-b2/project-backend:<sha> y :<entorno>
-  #      (necesita permissions: packages: write en el workflow que llama).
-  #   2. aws ssm send-command -> infra/ec2/deploy.sh <entorno> <sha>
-  #      (health check y rollback a /opt/app/<entorno>/.last-good; si falla, el job falla).

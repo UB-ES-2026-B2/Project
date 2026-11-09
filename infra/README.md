@@ -13,8 +13,14 @@ Cuenta `891377256343`, región `eu-west-1`. Todos los recursos llevan la etiquet
 | OAC | `E3JFTN9XCQM9SW` (`es-b2-s3-oac`) | `aws_cloudfront_origin_access_control.s3` |
 | CloudFront Function | `es-b2-spa-rewrite` | `aws_cloudfront_function.spa_rewrite` |
 | Proveedor OIDC de GitHub | `token.actions.githubusercontent.com` | `aws_iam_openid_connect_provider.github` |
-| Rol de despliegue | `es-b2-github-deploy` (+ política en línea `deploy-frontend`) | `aws_iam_role.github_deploy` |
-| Presupuesto | `es-b2-mensual`, 20 USD/mes, sin alertas | `aws_budgets_budget.monthly` |
+| Rol de despliegue | `es-b2-github-deploy` (+ políticas en línea `deploy-frontend` y `deploy-backend`: `ssm:SendCommand` solo sobre la EC2) | `aws_iam_role.github_deploy` (falta `deploy-backend`) |
+| Presupuesto | `es-b2-mensual`, 20 USD/mes, avisos al 50/80/100 % y previsión del 100 % | `aws_budgets_budget.monthly` |
+| EC2 backend | `i-04f75768fd53ac2e8` (t4g.micro, Amazon Linux 2023 arm64), rol `es-b2-ec2` | No (a mano) |
+| IP elástica | `34.248.127.190` | No (a mano) |
+| Security group | `sg-0870449e9837d99d4` (puertos 8000-8001 solo desde la lista de prefijos de CloudFront `pl-4fa04526`; sin SSH) | No (a mano) |
+| Secretos | SSM `/es-b2/prod/POSTGRES_PASSWORD` y `/es-b2/prod/SECRET_KEY` (`SecureString`) | No (a mano) |
+| Logs | CloudWatch `/es-b2/prod` (14 días) | No (a mano) |
+| Alarma | `es-b2-app-auto-recover` (recupera la EC2 si falla el host) | No (a mano) |
 | Bucket del estado de Terraform | `es-b2-tfstate-891377256343` (privado, AES256, versionado) | No: es el arranque |
 | Rol de `terraform plan` | `es-b2-github-terraform-plan` | No: es el arranque |
 | Rol de `terraform apply` | `es-b2-github-terraform-apply` | No: es el arranque |
@@ -28,6 +34,8 @@ Mientras la migración a Terraform no esté aplicada, cualquier cambio hecho a m
 | 2026-10-06 | DevOps | Creación inicial de buckets, CloudFront, OAC, función, OIDC, rol de GitHub y presupuesto |
 | 2026-10-06 | Claude (con root) | Bucket del estado `es-b2-tfstate-891377256343`: privado, AES256, versionado y etiqueta `project=es-b2` |
 | 2026-10-07 | DevOps (CloudShell) | Confianza de los tres roles (`es-b2-github-deploy`, `es-b2-github-terraform-plan`, `es-b2-github-terraform-apply`) cambiada al formato de sub con IDs inmutables: `repo:UB-ES-2026-B2@335691788/Project@1407787603:<contexto>` |
+| 2026-10-26 | DevOps + Claude | EC2, IP elástica, security group, rol `es-b2-ec2`, secretos en SSM, logs, alarma de recuperación, ruta `/api/*` del CloudFront y política `deploy-backend`. Backend de `main` arrancado a mano (proyecto Compose `es-b2-prod`) |
+| 2026-11-01 | Claude | Alertas del presupuesto por correo y cabecera de caché de `/media/*` (US 1.1.3) |
 
 ## Arranque (una sola vez)
 
@@ -88,10 +96,15 @@ Añade la entrada `staging` a `var.environments` en [`variables.tf`](terraform/v
 
 - Usuarios IAM con MFA para DevOps y para Claude, y dejar de usar root (ver `docs/decisiones.md`, D9).
 - Staging (bucket + CloudFront).
-- `ec2.tf`: t4g.micro arm64, IP elástica, Docker, SSM y agente de CloudWatch (`ec2/user-data.sh`, `ec2/deploy.sh`).
-- `monitoring.tf`: alarma de recuperación, logs de los contenedores (14 días) y alarma de `/api/health`.
-- Ruta `/api/*` sin caché en los CloudFront hacia la EC2.
-- Permisos de `ssm:SendCommand` en el rol de despliegue.
-- Copia diaria de Postgres (`scripts/backup-db.sh`).
-- Alertas del presupuesto: rellenar `budget_alert_emails`.
+- Pasar a Terraform lo creado a mano el 26/10 (`ec2.tf`, `monitoring.tf` y la política `deploy-backend`).
+- Alarma de `/api/health`.
+- Copia diaria de Postgres al bucket de copias.
+- Backend de staging: secretos `/es-b2/staging/*` y rellenar `ec2_instance` en `deploy-staging.yml`.
+
+## Backend en la EC2
+
+- Cada merge a `main` despliega el backend solo (workflow *Deploy prod*, con la aprobación del environment `production`). Ver [`docs/arquitectura.md`](../docs/arquitectura.md#backend).
+- En la EC2: `/opt/app/prod/` tiene `docker-compose.prod.yml`, `deploy.sh` y `.last-good` (última versión que pasó el health check).
+- Ver qué está corriendo, sin SSH: *Systems Manager → Run Command → AWS-RunShellScript* con `docker ps` y `cat /opt/app/prod/.last-good`.
+- Volver a desplegar una versión concreta: *Actions → Deploy prod → Run workflow* (desde `main`), o por Run Command `SKIP_PULL=1 /opt/app/prod/deploy.sh prod <sha>` si esa imagen sigue en la EC2.
 - Limitar la confianza del rol de despliegue a `environment:production` y `environment:staging`, en lugar de `environment:*`.
