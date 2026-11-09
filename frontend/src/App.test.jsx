@@ -113,4 +113,14 @@ describe('initial screen', () => {
     expect(screen.getByRole('navigation', { name: 'Cuenta' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login');
   });
+
+  it('shows the location search in the featured listings (US 1.3.2)', () => {
+    useProperties.mockReturnValue({ properties: [], isLoading: false });
+    renderApp();
+
+    expect(screen.getByRole('combobox', { name: 'Buscar por ubicación' })).toBeInTheDocument();
+    // Sin ubicación elegida, el catálogo se pide sin filtro.
+    expect(useProperties).toHaveBeenLastCalledWith(null);
+    expect(screen.getByRole('heading', { name: 'Aún no hay anuncios disponibles' })).toBeInTheDocument();
+  });
 });
