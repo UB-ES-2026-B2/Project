@@ -22,7 +22,7 @@ dependencies = [
   # mantenim una versio de bcrypt compatible amb passlib
   "bcrypt>=4.0.1,<4.1",
   "PyJWT>=2.10,<3",
-  "email-validator>=2.2,<3",
+  "email-validator>=2.3.0,<3",
   # formulario OAuth2 de POST /api/auth/login (botón Authorize de Swagger)
   "python-multipart>=0.0.20",
 ]
