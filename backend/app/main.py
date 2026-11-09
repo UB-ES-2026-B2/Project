@@ -7,6 +7,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 
 from app.api.routes.auth import router as auth_router
+from app.api.routes.favorites import router as favorites_router
 from app.api.routes.properties import router as properties_router
 from app.core.config import get_settings
 
@@ -37,4 +38,5 @@ def health(response: Response) -> dict[str, str]:
 
 api.include_router(properties_router)
 api.include_router(auth_router)
+api.include_router(favorites_router)
 app.include_router(api)
