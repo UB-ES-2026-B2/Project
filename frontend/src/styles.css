@@ -581,3 +581,138 @@ h1 {
   color: #147b55;
   font-weight: 700;
 }
+
+.location-search {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  max-width: 520px;
+  margin-top: 16px;
+}
+
+.location-search__label {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.location-search__field {
+  position: relative;
+}
+
+.location-search__input {
+  width: 100%;
+  padding: 12px 44px 12px 14px;
+  border: 1px solid #cbd5ca;
+  border-radius: 10px;
+  background: #fff;
+  color: #1d2923;
+  font: inherit;
+}
+
+.location-search__input:focus-visible,
+.location-search__clear:focus-visible,
+.location-search__option:focus-visible,
+.empty-state__action:focus-visible {
+  outline: 3px solid #147b55;
+  outline-offset: 2px;
+}
+
+.location-search__clear {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #46534b;
+  cursor: pointer;
+  font-size: 22px;
+}
+
+.location-search__listbox {
+  position: absolute;
+  top: calc(100% + 4px);
+  z-index: 10;
+  width: 100%;
+  max-height: 260px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 6px;
+  border: 1px solid #e5e8e2;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(29 41 35 / 12%);
+  list-style: none;
+}
+
+.location-search__option {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.location-search__option--active,
+.location-search__option:hover {
+  background: #eef4ef;
+}
+
+.location-search__type {
+  color: #788079;
+  font-size: 12px;
+}
+
+.location-search__popup {
+  position: absolute;
+  top: calc(100% + 4px);
+  z-index: 11;
+  width: 100%;
+}
+
+.location-search__status,
+.empty-state {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid #e5e8e2;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(29 41 35 / 12%);
+}
+
+.location-search__status--error {
+  color: #9f2525;
+}
+
+.empty-state__title,
+.empty-state__description {
+  margin: 0;
+}
+
+.empty-state__description {
+  margin-top: 6px;
+  color: #788079;
+  font-size: 14px;
+}
+
+.empty-state__action {
+  margin-top: 12px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: #147b55;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.catalog-empty {
+  margin: 24px 0 0;
+  color: #788079;
+  text-align: center;
+}
