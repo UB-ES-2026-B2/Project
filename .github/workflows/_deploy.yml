@@ -64,7 +64,7 @@ jobs:
             echo "deploy=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: aws-actions/configure-aws-credentials@v6
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         if: steps.check.outputs.deploy == 'true'
         with:
           role-to-assume: ${{ env.AWS_ROLE }}
@@ -180,7 +180,7 @@ jobs:
           npm ci
           npm run build
 
-      - uses: aws-actions/configure-aws-credentials@v6
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         if: steps.check.outputs.deploy == 'true'
         with:
           role-to-assume: ${{ env.AWS_ROLE }}
