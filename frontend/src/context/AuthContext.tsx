@@ -160,6 +160,7 @@ async function runPendingFavorite(queryClient: QueryClient | undefined) {
       method: 'POST',
     });
     await queryClient?.invalidateQueries({ queryKey: ['properties'] });
+    await queryClient?.invalidateQueries({ queryKey: ['favorites'] });
   } catch {
     // Si falla, el usuario puede volver a pulsar el corazón; no se bloquea el login.
   }
