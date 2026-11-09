@@ -18,9 +18,8 @@ dependencies = [
   "sqlalchemy>=2.1.6",
   "psycopg[binary]>=3.3.6",
   "alembic>=1.20.1",
-  "passlib[bcrypt]>=1.7.4,<1.8",
-  # mantenim una versio de bcrypt compatible amb passlib
-  "bcrypt>=4.0.1,<4.1",
+  # hash de contraseñas; se usa directamente, sin passlib (abandonado e incompatible con bcrypt 5)
+  "bcrypt>=5.0.0,<6",
   "PyJWT>=2.10,<3",
   "email-validator>=2.2,<3",
   # formulario OAuth2 de POST /api/auth/login (botón Authorize de Swagger)
