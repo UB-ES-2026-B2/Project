@@ -30,7 +30,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "ruff>=0.17.3",
-  "pytest>=8",
+  "pytest>=9.2.0",
   "pytest-cov>=5",
   "httpx>=0.28.1",
 ]
