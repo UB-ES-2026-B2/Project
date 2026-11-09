@@ -1,58 +1,59 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Property } from './PropertyCard.tsx';
-import { PROPERTIES_QUERY_KEY } from './useProperties.js';
+import useFavoriteIds, { FAVORITES_QUERY_KEY } from './useFavoriteIds';
+import { apiFetch } from '../../src/api/client';
 
 type FavoriteButtonProps = {
-  propertyId: string;
+  propertyId: string | number;
+  /** Valor inicial mientras no se conocen los favoritos del usuario (o sin sesión). */
   isFavorite: boolean;
   isAuthenticated: boolean;
   onRequireAuth?: () => void;
 };
 
 type FavoriteMutation = {
-  propertyId: string;
+  id: string;
   nextFavorite: boolean;
 };
 
 function FavoriteButton({
   propertyId,
-  isFavorite,
+  isFavorite: initialFavorite,
   isAuthenticated,
   onRequireAuth,
 }: FavoriteButtonProps) {
   const queryClient = useQueryClient();
   const [error, setError] = useState(false);
+  const id = String(propertyId);
+  // Con sesión, la fuente de verdad son los favoritos guardados en el backend (US 1.2.1).
+  const { data: favoriteIds } = useFavoriteIds(isAuthenticated);
+  const isFavorite = isAuthenticated && favoriteIds ? favoriteIds.includes(id) : initialFavorite;
+
   const mutation = useMutation({
-    mutationFn: async ({ propertyId: id, nextFavorite }: FavoriteMutation) => {
-      const response = await fetch(
-        `/api/properties/${encodeURIComponent(id)}/favorite`,
+    mutationFn: async ({ id: targetId, nextFavorite }: FavoriteMutation) => {
+      // apiFetch añade la cabecera Authorization: Bearer <token> (US 4.2.2).
+      const response = await apiFetch(
+        `/api/v1/favorites/${encodeURIComponent(targetId)}`,
         { method: nextFavorite ? 'POST' : 'DELETE' },
       );
       if (!response.ok) throw new Error('No se pudo actualizar el favorito.');
     },
-    onMutate: async ({ propertyId: id, nextFavorite }) => {
-      await queryClient.cancelQueries({ queryKey: PROPERTIES_QUERY_KEY });
-      const properties = queryClient.getQueryData<Property[]>(PROPERTIES_QUERY_KEY);
-      const previousFavorite = properties?.find((property) => property.id === id)?.isFavorite ?? false;
-      queryClient.setQueryData<Property[]>(PROPERTIES_QUERY_KEY, (properties) => (
-        properties?.map((property) => (
-          property.id === id ? { ...property, isFavorite: nextFavorite } : property
-        ))
-      ));
-      return { previousFavorite };
+    // Actualización optimista: el corazón cambia al momento y se deshace si la API falla.
+    onMutate: async ({ id: targetId, nextFavorite }) => {
+      await queryClient.cancelQueries({ queryKey: FAVORITES_QUERY_KEY });
+      const previous = queryClient.getQueryData<string[]>(FAVORITES_QUERY_KEY);
+      const current = previous ?? (initialFavorite ? [targetId] : []);
+      queryClient.setQueryData<string[]>(FAVORITES_QUERY_KEY, nextFavorite
+        ? [targetId, ...current.filter((favoriteId) => favoriteId !== targetId)]
+        : current.filter((favoriteId) => favoriteId !== targetId));
+      return { previous };
     },
-    onError: (_error, { propertyId: id }, context) => {
-      if (context) {
-        queryClient.setQueryData<Property[]>(PROPERTIES_QUERY_KEY, (properties) => (
-          properties?.map((property) => (
-            property.id === id ? { ...property, isFavorite: context.previousFavorite } : property
-          ))
-        ));
-      }
+    onError: (_error, _variables, context) => {
+      queryClient.setQueryData(FAVORITES_QUERY_KEY, context?.previous);
       setError(true);
     },
     onSuccess: () => setError(false),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: FAVORITES_QUERY_KEY }),
   });
 
   const handleClick = () => {
@@ -60,12 +61,12 @@ function FavoriteButton({
     if (!isAuthenticated) {
       sessionStorage.setItem(
         'pendingFavorite',
-        JSON.stringify({ pendingFavoriteId: propertyId }),
+        JSON.stringify({ pendingFavoriteId: id }),
       );
       onRequireAuth?.();
       return;
     }
-    mutation.mutate({ propertyId, nextFavorite: !isFavorite });
+    mutation.mutate({ id, nextFavorite: !isFavorite });
   };
 
   return (
