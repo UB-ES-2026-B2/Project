@@ -4,7 +4,7 @@
 # el extra "dev" con ruff/pytest y las secciones [tool.ruff] y [tool.pytest.ini_options].
 
 [build-system]
-requires = ["setuptools>=84.0.0"]
+requires = ["setuptools>=84.2.1"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -22,7 +22,7 @@ dependencies = [
   # mantenim una versio de bcrypt compatible amb passlib
   "bcrypt>=5.0.0,<5.1",
   "PyJWT>=2.10,<3",
-  "email-validator>=2.2,<3",
+  "email-validator>=2.3.0,<3",
   # formulario OAuth2 de POST /api/auth/login (botón Authorize de Swagger)
   "python-multipart>=0.0.20",
 ]
