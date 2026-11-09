@@ -270,3 +270,21 @@ def test_me_rejects_deactivated_user(client: TestClient, db: Session, user: User
     db.flush()
 
     assert client.get("/api/auth/me", headers=bearer(token)).status_code == 401
+
+
+def test_login_accepts_hash_created_by_passlib(client: TestClient, db: Session) -> None:  # noqa: F811
+    # Hash generado con passlib (versión anterior del backend): los usuarios ya
+    # registrados tienen que poder seguir entrando tras pasar a bcrypt directo.
+    legacy_hash = "$2b$12$X7wv7IvxIj.FKalSE1ZWnegKCCAVXEFm6pqOleLyJ02cew.ijEvNC"
+    db.add(User(email="antigua@example.com", hashed_password=legacy_hash))
+    db.flush()
+
+    ok = client.post(
+        "/api/auth/login", json={"email": "antigua@example.com", "password": "contrasenya-antigua"}
+    )
+    bad = client.post(
+        "/api/auth/login", json={"email": "antigua@example.com", "password": "otra-contrasenya"}
+    )
+
+    assert ok.status_code == 200
+    assert bad.status_code == 401
