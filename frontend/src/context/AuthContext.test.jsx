@@ -177,7 +177,7 @@ describe('AuthContext · login', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
     const [url, init] = fetchMock.mock.calls[1];
-    expect(url).toBe('/api/properties/piso%201/favorite');
+    expect(url).toBe('/api/v1/favorites/piso%201');
     expect(init.method).toBe('POST');
     expect(init.headers.get('Authorization')).toBe('Bearer login-token');
     expect(sessionStorage.getItem('pendingFavorite')).toBeNull();
