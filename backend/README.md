@@ -88,7 +88,7 @@ El email se normaliza a minúsculas. Repetirlo, incluso cambiando mayúsculas,
 devuelve `409`. Los datos incompletos o inválidos devuelven `422`.
 `full_name` se puede omitir. La contraseña admite un mínimo de 8 caracteres y un
 máximo de 72 bytes UTF-8, sin caracteres NUL; se rechaza el exceso para evitar
-el [truncamiento de bcrypt](https://passlib.readthedocs.io/en/stable/lib/passlib.hash.bcrypt.html).
+el [truncamiento de bcrypt](https://github.com/pyca/bcrypt#maximum-password-length).
 La respuesta y los errores de validación no incluyen contraseñas ni hashes.
 
 ## Iniciar sesión y consultar el usuario actual
