@@ -21,7 +21,7 @@ dependencies = [
   # hash de contraseñas; se usa directamente, sin passlib (abandonado e incompatible con bcrypt 5)
   "bcrypt>=5.0.0,<6",
   "PyJWT>=2.10,<3",
-  "email-validator>=2.2,<3",
+  "email-validator>=2.3.0,<3",
   # formulario OAuth2 de POST /api/auth/login (botón Authorize de Swagger)
   "python-multipart>=0.0.20",
 ]
