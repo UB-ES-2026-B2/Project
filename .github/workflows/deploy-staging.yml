@@ -26,3 +26,8 @@ jobs:
       url: ""
       frontend_bucket: ""
       cloudfront_distribution: ""
+      # Backend de staging (es-b2-staging, puerto 8001 en la misma EC2): falta crear sus
+      # secretos /es-b2/staging/* en SSM y la ruta /api/* de su CloudFront. Mientras
+      # ec2_instance esté vacío, el despliegue del backend se salta con un aviso.
+      app_env: staging
+      ec2_instance: ""
