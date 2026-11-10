@@ -149,6 +149,7 @@ describe('RegisterForm', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Este correo electrónico ya está registrado. ¿Deseas iniciar sesión?',
     );
+    expect(screen.getByRole('link', { name: 'iniciar sesión' })).toHaveAttribute('href', '/login');
     expect(localStorage.getItem('access_token')).toBeNull();
   });
 });

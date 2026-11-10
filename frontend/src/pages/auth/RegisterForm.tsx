@@ -47,6 +47,7 @@ function RegisterForm({ onSuccess }: RegisterFormProps) {
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState('');
+  const [isEmailAlreadyRegistered, setIsEmailAlreadyRegistered] = useState(false);
   const [isTermsDialogOpen, setIsTermsDialogOpen] = useState(false);
   const errors = validate(values);
 
@@ -55,6 +56,7 @@ function RegisterForm({ onSuccess }: RegisterFormProps) {
     if (isSubmitting) return;
     setSubmitted(true);
     setServerError('');
+    setIsEmailAlreadyRegistered(false);
     if (Object.keys(errors).length > 0) return;
 
     setIsSubmitting(true);
@@ -66,7 +68,7 @@ function RegisterForm({ onSuccess }: RegisterFormProps) {
       });
 
       if (response.status === 409) {
-        setServerError('Este correo electrónico ya está registrado. ¿Deseas iniciar sesión?');
+        setIsEmailAlreadyRegistered(true);
         return;
       }
       if (!response.ok) {
@@ -173,9 +175,14 @@ function RegisterForm({ onSuccess }: RegisterFormProps) {
         </div>
       )}
 
-      {serverError && (
+      {(serverError || isEmailAlreadyRegistered) && (
         <p className="register-form__server-error" role="alert">
-          {serverError}
+          {isEmailAlreadyRegistered ? (
+            <>
+              Este correo electrónico ya está registrado. ¿Deseas{' '}
+              <a href="/login">iniciar sesión</a>?
+            </>
+          ) : serverError}
         </p>
       )}
 
