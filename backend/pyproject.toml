@@ -16,7 +16,7 @@ dependencies = [
   "uvicorn[standard]>=0.54.0",
   "pydantic-settings>=2.16.2",
   "sqlalchemy>=2.1.6",
-  "psycopg[binary]>=3.3.6",
+  "psycopg[binary]>=3.3.8",
   "alembic>=1.20.1",
   # hash de contraseñas; se usa directamente, sin passlib (abandonado e incompatible con bcrypt 5)
   "bcrypt>=5.0.0,<6",
