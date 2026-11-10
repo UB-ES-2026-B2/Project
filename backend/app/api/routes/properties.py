@@ -2,10 +2,11 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, ConfigDict, computed_field
-from sqlalchemy import func, select
+from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.models.location import Location
 from app.models.property import Property
 
 router = APIRouter(prefix="/v1/properties", tags=["properties"])
@@ -45,16 +46,33 @@ class PaginatedProperties(BaseModel):
     total: int
 
 
+def in_location(location_id: int) -> ColumnElement[bool]:
+    # una ciudad abarca sus barrios y codigos postales, un barrio o un cp solo a si mismo
+    area = select(Location.id).where(
+        or_(Location.id == location_id, Location.parent_id == location_id)
+    )
+    return or_(Property.neighborhood_id.in_(area), Property.postal_code_id.in_(area))
+
+
 @router.get("", response_model=PaginatedProperties)
 def list_properties(
     db: DbSession,
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=12, ge=1, le=50),
+    location_id: int | None = Query(
+        default=None,
+        ge=1,
+        le=2_147_483_647,
+        description="Id de una sugerencia de GET /api/v1/locations/suggest",
+    ),
 ) -> PaginatedProperties:
-    total = db.scalar(select(func.count()).select_from(Property)) or 0
+    query = select(Property)
+    if location_id is not None:
+        query = query.where(in_location(location_id))
+
+    total = db.scalar(select(func.count()).select_from(query.subquery())) or 0
     properties = db.scalars(
-        select(Property)
-        .order_by(Property.created_at.desc(), Property.id.desc())
+        query.order_by(Property.created_at.desc(), Property.id.desc())
         .offset((page - 1) * limit)
         .limit(limit)
     ).all()
