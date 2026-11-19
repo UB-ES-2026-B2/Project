@@ -805,6 +805,45 @@ h1 {
   margin: 0 auto;
 }
 
+.personal-home {
+  min-height: 100vh;
+}
+
+.personal-home__intro {
+  width: min(1180px, 100% - 32px);
+  margin: 0 auto;
+  padding: 40px 0 4px;
+}
+
+.personal-home__intro h1 {
+  margin: 6px 0 8px;
+  font-family: 'Manrope', 'DM Sans', sans-serif;
+  font-size: clamp(30px, 4vw, 42px);
+  letter-spacing: -.03em;
+}
+
+.personal-home__intro p:last-child {
+  max-width: 620px;
+  margin: 0;
+  color: #788079;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.personal-home__content {
+  display: grid;
+  gap: 0;
+  padding-bottom: 56px;
+}
+
+.personal-home__section {
+  padding-top: 20px;
+}
+
+.personal-home__section .location-search {
+  margin-top: 0;
+}
+
 .home-section {
   padding: 64px 0;
   scroll-margin-top: 84px;
@@ -1205,6 +1244,7 @@ h1 {
   position: absolute;
   top: calc(100% + 10px);
   right: 0;
+  z-index: 10;
   display: grid;
   min-width: 210px;
   gap: 4px;

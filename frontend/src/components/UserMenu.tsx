@@ -1,6 +1,6 @@
 import { useAuth } from '../context/AuthContext';
 
-/** Menú de usuario de la cabecera: acceso a login/registro o, con sesión, cerrar sesión. */
+/** Menú de usuario de la cabecera: acceso a login/registro o acciones de la cuenta. */
 function UserMenu() {
   const { isAuthenticated, user, logout } = useAuth();
 

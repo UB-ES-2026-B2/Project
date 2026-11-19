@@ -4,9 +4,9 @@ import UserMenu from '../../src/components/UserMenu.tsx';
 import { MenuIcon, UserIcon } from './icons.jsx';
 
 const LINKS = [
-  { href: '#destacados', label: 'Anuncios' },
-  { href: '#tipos', label: 'Tipos de espacio' },
-  { href: '#como-funciona', label: 'Cómo funciona' },
+  { href: '/#destacados', label: 'Anuncios' },
+  { href: '/#tipos', label: 'Tipos de espacio' },
+  { href: '/#como-funciona', label: 'Cómo funciona' },
 ];
 
 function SiteHeader() {
@@ -27,7 +27,7 @@ function SiteHeader() {
   return (
     <header className="site-header">
       <div className="site-header__inner">
-        <a className="site-header__brand" href="#inicio" onClick={closeMenu}>
+        <a className="site-header__brand" href="/#inicio" onClick={closeMenu}>
           <span className="site-header__logo" aria-hidden="true">L</span>
           Llar
         </a>
@@ -60,9 +60,11 @@ function SiteHeader() {
                 <UserIcon />
               </span>
             )}
-            <a className="button button--accent" href="#destacados" onClick={closeMenu}>
-              Explorar anuncios
-            </a>
+            {!isAuthenticated && (
+              <a className="button button--accent" href="/#destacados" onClick={closeMenu}>
+                Explorar anuncios
+              </a>
+            )}
           </div>
         </div>
       </div>
