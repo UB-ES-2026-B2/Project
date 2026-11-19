@@ -122,7 +122,7 @@ function AuthenticatedHomePage() {
 
   return (
     <>
-      <a className="skip-link" href="#recomendados">Saltar a los anuncios recomendados</a>
+      <a className="skip-link" href="#destacados">Saltar a los anuncios recomendados</a>
       <SiteHeader />
       <main id="inicio" className="personal-home">
         <section className="personal-home__intro" aria-labelledby="personal-home-title">
@@ -132,15 +132,23 @@ function AuthenticatedHomePage() {
         </section>
 
         <div className="home-content personal-home__content">
-          <nav className="personal-home__tabs" aria-label="Contenido de tu cuenta">
-            <span className="personal-home__tab is-active">Anuncios recomendados</span>
-          </nav>
           <section
-            id="recomendados"
+            id="destacados"
             className="home-section personal-home__section"
-            aria-label="Anuncios recomendados"
+            aria-labelledby="recommended-title"
             aria-busy={isLoading}
           >
+            <div className="home-section__header">
+              <div>
+                <p className="home-section__eyebrow">PARA TI</p>
+                <h2 id="recommended-title" className="home-section__title">
+                  Anuncios recomendados
+                </h2>
+              </div>
+              <p className="home-section__description">
+                Espacios seleccionados para ayudarte a encontrar tu próximo lugar.
+              </p>
+            </div>
             <LocationSearchBar onLocationChange={setLocation} />
             <PropertyListing
               properties={recommendedProperties}
@@ -151,6 +159,9 @@ function AuthenticatedHomePage() {
                 : 'Aún no hay anuncios recomendados. Vuelve pronto para descubrir nuevos espacios.'}
             />
           </section>
+
+          <SpaceTypeGrid />
+          <HowItWorks />
         </div>
       </main>
       <SiteFooter />

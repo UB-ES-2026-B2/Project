@@ -763,31 +763,8 @@ h1 {
   padding-bottom: 56px;
 }
 
-.personal-home__tabs {
-  display: flex;
-  gap: 28px;
-  border-bottom: 1px solid #dce3dc;
-}
-
-.personal-home__tab {
-  position: relative;
-  padding-bottom: 12px;
-  color: #147b55;
-  font-weight: 700;
-}
-
-.personal-home__tab::after {
-  position: absolute;
-  right: 0;
-  bottom: -1px;
-  left: 0;
-  height: 2px;
-  background: #147b55;
-  content: '';
-}
-
 .personal-home__section {
-  padding-top: 0;
+  padding-top: 32px;
 }
 
 .personal-home__section .location-search {
