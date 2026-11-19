@@ -15,6 +15,7 @@ function UserMenu() {
 
   return (
     <nav className="user-menu" aria-label="Cuenta">
+      <a className="user-menu__link" href="/publicar">Publicar anuncio</a>
       <span className="user-menu__name">{user?.full_name || user?.email || 'Mi cuenta'}</span>
       <button className="user-menu__logout" type="button" onClick={logout}>
         Cerrar sesión
