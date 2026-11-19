@@ -735,6 +735,65 @@ h1 {
   margin: 0 auto;
 }
 
+.personal-home {
+  min-height: 100vh;
+}
+
+.personal-home__intro {
+  width: min(1180px, 100% - 32px);
+  margin: 0 auto;
+  padding: 56px 0 24px;
+}
+
+.personal-home__intro h1 {
+  margin: 8px 0 12px;
+}
+
+.personal-home__intro p:last-child {
+  max-width: 620px;
+  margin: 0 0 24px;
+  color: #788079;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.personal-home__content {
+  display: grid;
+  gap: 0;
+  padding-bottom: 56px;
+}
+
+.personal-home__tabs {
+  display: flex;
+  gap: 28px;
+  border-bottom: 1px solid #dce3dc;
+}
+
+.personal-home__tab {
+  position: relative;
+  padding-bottom: 12px;
+  color: #147b55;
+  font-weight: 700;
+}
+
+.personal-home__tab::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  background: #147b55;
+  content: '';
+}
+
+.personal-home__section {
+  padding-top: 0;
+}
+
+.personal-home__section .location-search {
+  margin-top: 0;
+}
+
 .home-section {
   padding: 64px 0;
   scroll-margin-top: 84px;

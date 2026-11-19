@@ -11,6 +11,14 @@ import AuthModal from '../AuthModal.jsx';
 
 function HomePage() {
   const { isAuthenticated } = useAuth();
+
+  if (isAuthenticated) return <AuthenticatedHomePage />;
+
+  return <PublicHomePage />;
+}
+
+function PublicHomePage() {
+  const { isAuthenticated } = useAuth();
   // US 1.3.2: la ubicación elegida en el buscador filtra los anuncios (location_id).
   const [location, setLocation] = useState(null);
   const { properties, isLoading } = useProperties(location?.id ?? null);
@@ -102,6 +110,73 @@ function HomePage() {
       <SiteFooter />
       {isAuthModalOpen && <AuthModal onClose={() => setIsAuthModalOpen(false)} />}
     </>
+  );
+}
+
+function AuthenticatedHomePage() {
+  const { user } = useAuth();
+  const [location, setLocation] = useState(null);
+  const { properties, isLoading } = useProperties(location?.id ?? null);
+  const recommendedProperties = properties;
+  const displayName = user?.full_name || user?.email || 'tu cuenta';
+
+  return (
+    <>
+      <a className="skip-link" href="#recomendados">Saltar a los anuncios recomendados</a>
+      <SiteHeader />
+      <main id="inicio" className="personal-home">
+        <section className="personal-home__intro" aria-labelledby="personal-home-title">
+          <p className="home-section__eyebrow">TU ESPACIO EN LLAR</p>
+          <h1 id="personal-home-title">Hola, {displayName}</h1>
+          <p>Encuentra nuevos espacios y vuelve rápidamente a los anuncios que te interesan.</p>
+        </section>
+
+        <div className="home-content personal-home__content">
+          <nav className="personal-home__tabs" aria-label="Contenido de tu cuenta">
+            <span className="personal-home__tab is-active">Anuncios recomendados</span>
+          </nav>
+          <section
+            id="recomendados"
+            className="home-section personal-home__section"
+            aria-label="Anuncios recomendados"
+            aria-busy={isLoading}
+          >
+            <LocationSearchBar onLocationChange={setLocation} />
+            <PropertyListing
+              properties={recommendedProperties}
+              isLoading={isLoading}
+              isAuthenticated
+              emptyMessage={location
+                ? `No hay recomendaciones disponibles en ${location.name} por ahora.`
+                : 'Aún no hay anuncios recomendados. Vuelve pronto para descubrir nuevos espacios.'}
+            />
+          </section>
+        </div>
+      </main>
+      <SiteFooter />
+    </>
+  );
+}
+
+function PropertyListing({ properties, isLoading, isAuthenticated, emptyMessage }) {
+  if (isLoading) {
+    return (
+      <div className="home-listing-grid">
+        {Array.from({ length: 3 }, (_, index) => <PropertyCardSkeleton key={index} />)}
+      </div>
+    );
+  }
+
+  if (properties.length === 0) {
+    return <p className="catalog-empty" role="status">{emptyMessage}</p>;
+  }
+
+  return (
+    <div className="home-listing-grid">
+      {properties.map((property) => (
+        <PropertyCard key={property.id} property={property} isAuthenticated={isAuthenticated} />
+      ))}
+    </div>
   );
 }
 
