@@ -106,6 +106,17 @@ describe('initial screen', () => {
     window.history.pushState(null, '', '/');
   });
 
+  it('shows the property publication form on /publicar', () => {
+    localStorage.setItem('access_token', 'test-token');
+    window.history.pushState(null, '', '/publicar');
+    renderApp();
+
+    expect(screen.getByRole('heading', { name: 'Crea tu anuncio' })).toBeInTheDocument();
+
+    window.history.pushState(null, '', '/');
+    localStorage.removeItem('access_token');
+  });
+
   it('shows the account menu in the header', () => {
     useProperties.mockReturnValue({ properties: [], isLoading: false });
     renderApp();
