@@ -1,16 +1,26 @@
-import { defineConfig } from 'vite';
+
+import { defineConfig, configDefaults } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+
   server: {
     proxy: {
       '/api': 'http://localhost:8000',
     },
   },
+
   test: {
     environment: 'jsdom',
     setupFiles: './test-setup.js',
+
+    // Vitest no debe ejecutar las pruebas E2E de Playwright.
+    exclude: [
+      ...configDefaults.exclude,
+      '**/end2end/**',
+    ],
+
     coverage: {
       reporter: ['text', 'json-summary'],
       include: ['**/*.{jsx,tsx}'],
@@ -22,7 +32,7 @@ export default defineConfig({
           branches: 60,
           statements: 60,
         },
-        // US 4.2.2: persistencia de la sesión y logout con cobertura >= 60 %.
+        // US 4.2.2: persistencia de la sesión y logout.
         'src/context/AuthContext.tsx': {
           lines: 60,
           functions: 60,
