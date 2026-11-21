@@ -21,6 +21,9 @@ Cuenta `891377256343`, región `eu-west-1`. Todos los recursos llevan la etiquet
 | Secretos | SSM `/es-b2/prod/POSTGRES_PASSWORD` y `/es-b2/prod/SECRET_KEY` (`SecureString`) | No (a mano) |
 | Logs | CloudWatch `/es-b2/prod` (14 días) | No (a mano) |
 | Alarma | `es-b2-app-auto-recover` (recupera la EC2 si falla el host) | No (a mano) |
+| Health check de `/api/health` | Route 53 `es-b2-api-health-prod` (`c5a1fef2-fb6c-5102-09f9-345d13ab8664`): HTTPS a `d31v8l8u9lnbbr.cloudfront.net/api/health` cada 30 s desde 3 regiones | No (a mano) |
+| Alarma de `/api/health` | `es-b2-api-health-prod` en `us-east-1` (donde Route 53 publica sus métricas): salta si el health check falla 3 minutos seguidos y avisa por correo al caer y al recuperarse | No (a mano) |
+| Avisos | SNS `es-b2-alertas` en `us-east-1`, suscripción por correo de DevOps | No (a mano) |
 | Bucket del estado de Terraform | `es-b2-tfstate-891377256343` (privado, AES256, versionado) | No: es el arranque |
 | Rol de `terraform plan` | `es-b2-github-terraform-plan` | No: es el arranque |
 | Rol de `terraform apply` | `es-b2-github-terraform-apply` | No: es el arranque |
@@ -36,6 +39,7 @@ Mientras la migración a Terraform no esté aplicada, cualquier cambio hecho a m
 | 2026-10-07 | DevOps (CloudShell) | Confianza de los tres roles (`es-b2-github-deploy`, `es-b2-github-terraform-plan`, `es-b2-github-terraform-apply`) cambiada al formato de sub con IDs inmutables: `repo:UB-ES-2026-B2@335691788/Project@1407787603:<contexto>` |
 | 2026-10-26 | DevOps + Claude | EC2, IP elástica, security group, rol `es-b2-ec2`, secretos en SSM, logs, alarma de recuperación, ruta `/api/*` del CloudFront y política `deploy-backend`. Backend de `main` arrancado a mano (proyecto Compose `es-b2-prod`) |
 | 2026-11-01 | Claude | Alertas del presupuesto por correo y cabecera de caché de `/media/*` (US 1.1.3) |
+| 2026-11-21 | Claude | Health check de Route 53 sobre `/api/health`, alarma `es-b2-api-health-prod` y tema SNS `es-b2-alertas` (us-east-1) con aviso por correo |
 
 ## Arranque (una sola vez)
 
@@ -97,7 +101,6 @@ Añade la entrada `staging` a `var.environments` en [`variables.tf`](terraform/v
 - Usuarios IAM con MFA para DevOps y para Claude, y dejar de usar root (ver `docs/decisiones.md`, D9).
 - Staging (bucket + CloudFront).
 - Pasar a Terraform lo creado a mano el 26/10 (`ec2.tf`, `monitoring.tf` y la política `deploy-backend`).
-- Alarma de `/api/health`.
 - Backend de staging: secretos `/es-b2/staging/*` y rellenar `ec2_instance` en `deploy-staging.yml`.
 
 ## Backend en la EC2
