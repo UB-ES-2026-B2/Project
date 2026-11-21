@@ -8,12 +8,26 @@ import SpaceTypeGrid from '../../components/landing/SpaceTypeGrid.jsx';
 import LocationSearchBar from '../components/search/LocationSearchBar.tsx';
 import { useAuth } from '../context/AuthContext.tsx';
 import AuthModal from '../AuthModal.jsx';
+import OperationAndTypeFilter from '../components/filters/OperationAndTypeFilter.tsx';
+import useSearchParams from '../hooks/useSearchParams.ts';
 
 function HomePage() {
   const { isAuthenticated } = useAuth();
   // US 1.3.2: la ubicación elegida en el buscador filtra los anuncios (location_id).
   const [location, setLocation] = useState(null);
-  const { properties, isLoading } = useProperties(location?.id ?? null);
+  const [searchParams] = useSearchParams();
+  const operationParam = searchParams.get('operation_type');
+  const filters = {
+    operationType: operationParam === 'sale' || operationParam === 'rent'
+      ? operationParam
+      : null,
+    propertyTypes: searchParams.getAll('property_types'),
+  };
+  const { properties, isLoading } = useProperties(
+    location?.id ?? null,
+    filters.operationType,
+    filters.propertyTypes,
+  );
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   return (
@@ -60,6 +74,7 @@ function HomePage() {
             </div>
 
             <LocationSearchBar onLocationChange={setLocation} />
+            <OperationAndTypeFilter />
 
             {isLoading && (
               <div className="home-listing-grid">
