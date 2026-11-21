@@ -13,6 +13,9 @@ class Property(Base):
     __tablename__ = "properties"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    owner_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True
+    )
     title: Mapped[str] = mapped_column(String(120))
     location: Mapped[str] = mapped_column(String(160))
     price: Mapped[Decimal] = mapped_column(Numeric(10, 2))
@@ -31,3 +34,5 @@ class Property(Base):
     postal_code_id: Mapped[int | None] = mapped_column(
         ForeignKey("locations.id", ondelete="SET NULL"), nullable=True, index=True
     )
+
+    # TODO(US 1.4.1): operation_type y property_type pertenecen a esa historia.
