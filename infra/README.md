@@ -98,7 +98,6 @@ Añade la entrada `staging` a `var.environments` en [`variables.tf`](terraform/v
 - Staging (bucket + CloudFront).
 - Pasar a Terraform lo creado a mano el 26/10 (`ec2.tf`, `monitoring.tf` y la política `deploy-backend`).
 - Alarma de `/api/health`.
-- Copia diaria de Postgres al bucket de copias.
 - Backend de staging: secretos `/es-b2/staging/*` y rellenar `ec2_instance` en `deploy-staging.yml`.
 
 ## Backend en la EC2
@@ -108,3 +107,27 @@ Añade la entrada `staging` a `var.environments` en [`variables.tf`](terraform/v
 - Ver qué está corriendo, sin SSH: *Systems Manager → Run Command → AWS-RunShellScript* con `docker ps` y `cat /opt/app/prod/.last-good`.
 - Volver a desplegar una versión concreta: *Actions → Deploy prod → Run workflow* (desde `main`), o por Run Command `SKIP_PULL=1 /opt/app/prod/deploy.sh prod <sha>` si esa imagen sigue en la EC2.
 - Limitar la confianza del rol de despliegue a `environment:production` y `environment:staging`, en lugar de `environment:*`.
+
+## Copias de la base de datos
+
+- Cada noche, hacia las 03:30 UTC, el timer `es-b2-backup@prod.timer` de la EC2 ejecuta [`ec2/backup-db.sh`](ec2/backup-db.sh). El script hace un `pg_dump` en formato custom, comprueba con `pg_restore --list` que el volcado se puede leer y lo sube a `s3://es-b2-backups-891377256343/prod/AAAA/MM/DD/app-<fecha>.dump`. El bucket borra las copias a los 30 días.
+- El timer y el script los instala `build-and-deploy.sh` en cada despliegue, así que no hay que tocar la EC2 a mano. Si la EC2 estaba apagada a esa hora, la copia se hace al arrancar.
+- El rol `es-b2-ec2` necesita `s3:PutObject` sobre `es-b2-backups-891377256343/*`.
+
+Por *Systems Manager → Run Command → AWS-RunShellScript* en la EC2:
+
+```bash
+# Ver cuándo toca la próxima copia y cómo fue la última
+systemctl list-timers es-b2-backup@prod.timer --no-pager
+journalctl -u es-b2-backup@prod.service -n 20 --no-pager
+
+# Hacer una copia ahora
+systemctl start es-b2-backup@prod.service
+
+# Restaurar una copia (sustituye los datos actuales de producción)
+aws s3 ls s3://es-b2-backups-891377256343/prod/ --recursive | tail -5
+aws s3 cp s3://es-b2-backups-891377256343/prod/<ruta>.dump /var/tmp/restore.dump
+DB=$(docker ps -q --filter label=com.docker.compose.project=es-b2-prod --filter label=com.docker.compose.service=db)
+docker exec -i "$DB" pg_restore -U app -d app --clean --if-exists --no-owner < /var/tmp/restore.dump
+rm /var/tmp/restore.dump
+```
