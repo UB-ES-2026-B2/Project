@@ -126,12 +126,31 @@ describe('initial screen', () => {
   });
 
   it('shows the location search in the featured listings (US 1.3.2)', () => {
+    window.history.replaceState(null, '', '/');
     useProperties.mockReturnValue({ properties: [], isLoading: false });
     renderApp();
 
     expect(screen.getByRole('combobox', { name: 'Buscar por ubicación' })).toBeInTheDocument();
     // Sin ubicación elegida, el catálogo se pide sin filtro.
-    expect(useProperties).toHaveBeenLastCalledWith(null);
+    expect(useProperties).toHaveBeenLastCalledWith(null, null, []);
     expect(screen.getByRole('heading', { name: 'Aún no hay anuncios disponibles' })).toBeInTheDocument();
+  });
+
+  it('passes operation and property type filters to the catalog', () => {
+    window.history.replaceState(
+      null,
+      '',
+      '/?operation_type=rent&property_types=flat&property_types=office',
+    );
+    useProperties.mockReturnValue({ properties: [], isLoading: false });
+
+    renderApp();
+
+    expect(useProperties).toHaveBeenLastCalledWith(
+      null,
+      'rent',
+      ['flat', 'office'],
+    );
+    window.history.replaceState(null, '', '/');
   });
 });

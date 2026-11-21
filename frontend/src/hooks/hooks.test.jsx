@@ -58,4 +58,10 @@ describe('propertiesUrl', () => {
       '/api/v1/properties?page=1&limit=12&location_id=loc-bcn',
     );
   });
+
+  it('adds operation and repeated property type filters', () => {
+    expect(propertiesUrl(null, 'sale', ['flat', 'office'])).toBe(
+      '/api/v1/properties?page=1&limit=12&operation_type=sale&property_types=flat&property_types=office',
+    );
+  });
 });
