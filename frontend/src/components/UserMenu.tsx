@@ -1,6 +1,6 @@
 import { useAuth } from '../context/AuthContext';
 
-/** Menú de usuario de la cabecera: acceso a login/registro o, con sesión, cerrar sesión. */
+/** Menú de usuario de la cabecera: acceso a login/registro o acciones de la cuenta. */
 function UserMenu() {
   const { isAuthenticated, user, logout } = useAuth();
 
@@ -15,11 +15,23 @@ function UserMenu() {
 
   return (
     <nav className="user-menu" aria-label="Cuenta">
-      <a className="user-menu__link" href="/publicar">Publicar anuncio</a>
-      <span className="user-menu__name">{user?.full_name || user?.email || 'Mi cuenta'}</span>
-      <button className="user-menu__logout" type="button" onClick={logout}>
-        Cerrar sesión
-      </button>
+      <details className="user-menu__profile">
+        <summary className="user-menu__summary">
+          <span className="user-menu__avatar" aria-hidden="true">
+            {(user?.full_name || user?.email || 'M').charAt(0).toUpperCase()}
+          </span>
+          <span className="user-menu__name">
+            {user?.full_name || user?.email || 'Mi cuenta'}
+          </span>
+          <span className="user-menu__chevron" aria-hidden="true">⌄</span>
+        </summary>
+        <div className="user-menu__dropdown">
+          <a className="user-menu__dropdown-link" href="/publicar">Publicar anuncio</a>
+          <button className="user-menu__logout" type="button" onClick={logout}>
+            Cerrar sesión
+          </button>
+        </div>
+      </details>
     </nav>
   );
 }
