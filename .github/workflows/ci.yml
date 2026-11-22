@@ -252,7 +252,7 @@ jobs:
 
       - name: Ejecutar pruebas E2E
         working-directory: frontend
-        run: npm run test:e2e -- --grep-invert "un usuario autenticado puede publicar un inmueble"
+        run: npm run test:e2e 
 
       - name: Mostrar logs del backend si falla
         if: failure()
