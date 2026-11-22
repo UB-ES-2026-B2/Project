@@ -24,9 +24,12 @@ updates:
     commit-message:
       prefix: build(backend)
     open-pull-requests-limit: 5
+    # Todo el backend en una sola PR semanal. Con update-types, Dependabot no agrupaba los
+    # rangos de pyproject.toml (">=x.y") y abría una PR por paquete. Si una subida rompe
+    # algo, la CI lo para y se saca ese paquete a mano.
     groups:
-      backend-minor-patch:
-        update-types: [minor, patch]
+      backend:
+        patterns: ["*"]
 
   - package-ecosystem: npm
     directory: /frontend
