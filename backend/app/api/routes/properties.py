@@ -38,6 +38,7 @@ CREATE_RESPONSES = {
 
 
 OperationType = Literal["sale", "rent"]
+SortOrder = Literal["newest", "price_asc", "price_desc", "area_asc", "area_desc"]
 PropertyType = Literal["flat", "house", "local", "office", "garage", "storage"]
 
 
@@ -114,6 +115,15 @@ class PaginatedProperties(BaseModel):
     page: int
     limit: int
     total: int
+
+
+SORT_COLUMNS = {
+    "newest": (Property.created_at.desc(),),
+    "price_asc": (Property.price.asc(),),
+    "price_desc": (Property.price.desc(),),
+    "area_asc": (Property.area.asc(),),
+    "area_desc": (Property.area.desc(),),
+}
 
 
 def in_location(location_id: int) -> ColumnElement[bool]:
@@ -193,6 +203,10 @@ def list_properties(
         list[PropertyType] | None,
         Query(description="Tipologías; se repite: `?property_types=flat&property_types=office`"),
     ] = None,
+    sort: Annotated[
+        SortOrder,
+        Query(description="Orden: más recientes, precio o superficie (US 1.6)"),
+    ] = "newest",
 ) -> PaginatedProperties:
     query = select(Property).where(Property.is_active.is_(True))
     if location_id is not None:
@@ -204,7 +218,7 @@ def list_properties(
 
     total = db.scalar(select(func.count()).select_from(query.subquery())) or 0
     properties = db.scalars(
-        query.order_by(Property.created_at.desc(), Property.id.desc())
+        query.order_by(*SORT_COLUMNS[sort], Property.id.desc())
         .offset((page - 1) * limit)
         .limit(limit)
     ).all()
