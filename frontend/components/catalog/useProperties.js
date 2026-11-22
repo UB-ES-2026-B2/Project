@@ -10,14 +10,23 @@ function toCardProperty(property) {
   };
 }
 
-export function propertiesUrl(locationId) {
+/**
+ * URL del catálogo. `options` añade el resto de parámetros de GET /api/v1/properties
+ * (p. ej. `{ sort: 'price_asc' }`); los vacíos no se envían.
+ */
+export function propertiesUrl(locationId, operationType = null, propertyTypes = [], options = {}) {
   const params = new URLSearchParams({ page: '1', limit: '12' });
   if (locationId) params.set('location_id', locationId);
+  if (operationType) params.set('operation_type', operationType);
+  propertyTypes.forEach((propertyType) => params.append('property_types', propertyType));
+  Object.entries(options).forEach(([name, value]) => {
+    if (value !== null && value !== undefined && value !== '') params.set(name, String(value));
+  });
   return `/api/v1/properties?${params}`;
 }
 
-function useProperties(locationId = null) {
-  const url = propertiesUrl(locationId);
+function useProperties(locationId = null, operationType = null, propertyTypes = [], options = {}) {
+  const url = propertiesUrl(locationId, operationType, propertyTypes, options);
   const [result, setResult] = useState({ url: null, properties: [] });
 
   useEffect(() => {
