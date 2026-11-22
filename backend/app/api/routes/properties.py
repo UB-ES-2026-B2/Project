@@ -1,16 +1,23 @@
+import logging
 from datetime import datetime
 from decimal import Decimal
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
+from botocore.exceptions import BotoCoreError, ClientError
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Response, status
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, StringConstraints, computed_field
 from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.api.routes.auth import CurrentUser
+from app.core.config import Settings, get_settings
 from app.db.session import get_db
 from app.models.location import Location
 from app.models.property import Property
+from app.models.user import User
+from app.services.media import s3_storage
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/v1/properties", tags=["properties"])
 DbSession = Annotated[Session, Depends(get_db)]
@@ -202,6 +209,127 @@ def list_properties(
         .limit(limit)
     ).all()
     return PaginatedProperties(items=properties, page=page, limit=limit, total=total)
+
+
+FORBIDDEN = "Solo el anunciante puede modificar este anuncio"
+OWNER_RESPONSES = {
+    401: {"description": "Sin token o token no válido"},
+    403: {"description": FORBIDDEN},
+    404: {"description": "El inmueble no existe"},
+}
+PathPropertyId = Annotated[int, Path(ge=1, le=2_147_483_647)]
+
+
+class PropertyUpdate(BaseModel):
+    """Campos que el anunciante puede cambiar; solo se actualizan los que llegan (US 6.3.1)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    title: Title | None = None
+    operation_type: OperationType | None = None
+    property_type: PropertyType | None = None
+    description: PropertyDescription | None = None
+    address: Address | None = None
+    price: Price | None = None
+    bedrooms: int | None = Field(default=None, ge=0, le=50)
+    bathrooms: int | None = Field(default=None, ge=0, le=50)
+    area: int | None = Field(default=None, ge=1, le=100_000)
+
+
+class StatusUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    is_active: bool
+
+
+class MyProperties(BaseModel):
+    items: list[PropertyResponse]
+
+
+def owned_property(db: Session, property_id: int, user: User) -> Property:
+    property_ = db.get(Property, property_id)
+    if property_ is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El inmueble no existe")
+    if property_.owner_id != user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=FORBIDDEN)
+    return property_
+
+
+def apply_price(property_: Property, new_price: Decimal) -> None:
+    """Una bajada guarda el precio anterior para la etiqueta de rebaja (US 1.1)."""
+    current = Decimal(property_.price)
+    if new_price < current:
+        if property_.previous_price is None or Decimal(property_.previous_price) < current:
+            property_.previous_price = current
+    elif property_.previous_price is not None and new_price >= Decimal(property_.previous_price):
+        property_.previous_price = None
+    property_.price = new_price
+
+
+@router.get("/mine", response_model=MyProperties, responses={401: OWNER_RESPONSES[401]})
+def list_my_properties(user: CurrentUser, db: DbSession) -> MyProperties:
+    """Anuncios del usuario, activos y desactivados, del más reciente al más antiguo."""
+    properties = db.scalars(
+        select(Property)
+        .where(Property.owner_id == user.id)
+        .order_by(Property.created_at.desc(), Property.id.desc())
+    ).all()
+    return MyProperties(items=[PropertyResponse.model_validate(p) for p in properties])
+
+
+@router.patch("/{property_id}", response_model=PropertyResponse, responses=OWNER_RESPONSES)
+def update_property(
+    property_id: PathPropertyId, payload: PropertyUpdate, user: CurrentUser, db: DbSession
+) -> Property:
+    property_ = owned_property(db, property_id, user)
+    changes = payload.model_dump(exclude_unset=True, exclude_none=True)
+    new_price = changes.pop("price", None)
+    for field, value in changes.items():
+        setattr(property_, field, value)
+    if new_price is not None:
+        apply_price(property_, new_price)
+    db.commit()
+    db.refresh(property_)
+    return property_
+
+
+@router.patch("/{property_id}/status", response_model=PropertyResponse, responses=OWNER_RESPONSES)
+def update_status(
+    property_id: PathPropertyId, payload: StatusUpdate, user: CurrentUser, db: DbSession
+) -> Property:
+    """Activa o desactiva el anuncio. Desactivado, deja de salir en el catálogo."""
+    property_ = owned_property(db, property_id, user)
+    property_.is_active = payload.is_active
+    db.commit()
+    db.refresh(property_)
+    return property_
+
+
+@router.delete(
+    "/{property_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+    responses=OWNER_RESPONSES,
+)
+def delete_property(
+    property_id: PathPropertyId,
+    user: CurrentUser,
+    db: DbSession,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> Response:
+    """Borra el anuncio, sus fotos y los favoritos que lo apuntaban."""
+    property_ = owned_property(db, property_id, user)
+    keys = [image.s3_key for image in property_.images if image.s3_key]
+    db.delete(property_)
+    db.commit()
+    if keys and settings.media_bucket:
+        storage = s3_storage(settings.media_bucket, settings.aws_region)
+        for key in keys:
+            try:
+                storage.delete(key)
+            except (BotoCoreError, ClientError) as error:
+                logger.warning("No se pudo borrar %s de S3: %s", key, error)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get("/{property_id}", response_model=PropertyDetailResponse, responses=DETAIL_RESPONSES)
