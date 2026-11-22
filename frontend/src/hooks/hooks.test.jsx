@@ -49,13 +49,33 @@ describe('useSearchParams', () => {
 
     expect(result.current[0].get('location')).toBe('sitges');
   });
+
+  it('keeps every instance in sync when one of them changes the URL', () => {
+    const { result: filters } = renderHook(() => useSearchParams());
+    const { result: listing } = renderHook(() => useSearchParams());
+
+    act(() => filters.current[1]({ operation_type: 'rent' }));
+
+    expect(listing.current[0].get('operation_type')).toBe('rent');
+  });
 });
 
 describe('propertiesUrl', () => {
+  it('adds the extra options and skips the empty ones', () => {
+    expect(propertiesUrl(null, null, [], { sort: 'price_asc', min_price: '', max_price: null }))
+      .toBe('/api/v1/properties?page=1&limit=12&sort=price_asc');
+  });
+
   it('adds a location filter only when a location is selected', () => {
     expect(propertiesUrl(null)).toBe('/api/v1/properties?page=1&limit=12');
     expect(propertiesUrl('loc-bcn')).toBe(
       '/api/v1/properties?page=1&limit=12&location_id=loc-bcn',
+    );
+  });
+
+  it('adds operation and repeated property type filters', () => {
+    expect(propertiesUrl(null, 'sale', ['flat', 'office'])).toBe(
+      '/api/v1/properties?page=1&limit=12&operation_type=sale&property_types=flat&property_types=office',
     );
   });
 });
