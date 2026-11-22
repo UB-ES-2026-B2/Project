@@ -54,12 +54,16 @@ describe('initial screen', () => {
     expect(screen.queryByRole('img', { name: 'Sesión iniciada' })).not.toBeInTheDocument();
   });
 
-  it('replaces the create-account link with a user icon when signed in', () => {
+  it('shows the personalized home when signed in', () => {
     localStorage.setItem('access_token', 'test-token');
     useProperties.mockReturnValue({ properties: [], isLoading: false });
 
     renderApp();
 
+    expect(screen.getByRole('heading', { name: 'Hola, tu cuenta' })).toBeInTheDocument();
+    expect(screen.getByText('Anuncios recomendados')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Buscar por ubicación' })).toBeInTheDocument();
+    expect(screen.queryByText('Tus favoritos')).not.toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Sesión iniciada' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Crear cuenta' })).not.toBeInTheDocument();
     localStorage.removeItem('access_token');
