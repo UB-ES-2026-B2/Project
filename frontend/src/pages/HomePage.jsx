@@ -8,6 +8,9 @@ import SpaceTypeGrid from '../../components/landing/SpaceTypeGrid.jsx';
 import LocationSearchBar from '../components/search/LocationSearchBar.tsx';
 import { useAuth } from '../context/AuthContext.tsx';
 import AuthModal from '../AuthModal.jsx';
+import OperationAndTypeFilter from '../components/filters/OperationAndTypeFilter.tsx';
+import useSearchParams from '../hooks/useSearchParams.ts';
+import SortSelect, { readSort } from '../components/filters/SortSelect.tsx';
 
 function HomePage() {
   const { isAuthenticated } = useAuth();
@@ -21,7 +24,20 @@ function PublicHomePage() {
   const { isAuthenticated } = useAuth();
   // US 1.3.2: la ubicación elegida en el buscador filtra los anuncios (location_id).
   const [location, setLocation] = useState(null);
-  const { properties, isLoading } = useProperties(location?.id ?? null);
+  const [searchParams] = useSearchParams();
+  const operationParam = searchParams.get('operation_type');
+  const filters = {
+    operationType: operationParam === 'sale' || operationParam === 'rent'
+      ? operationParam
+      : null,
+    propertyTypes: searchParams.getAll('property_types'),
+  };
+  const { properties, isLoading } = useProperties(
+    location?.id ?? null,
+    filters.operationType,
+    filters.propertyTypes,
+    { sort: readSort(searchParams) },
+  );
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   return (
@@ -68,6 +84,10 @@ function PublicHomePage() {
             </div>
 
             <LocationSearchBar onLocationChange={setLocation} />
+            <div className="catalog-toolbar">
+              <OperationAndTypeFilter />
+              <SortSelect />
+            </div>
 
             {isLoading && (
               <div className="home-listing-grid">
@@ -116,7 +136,10 @@ function PublicHomePage() {
 function AuthenticatedHomePage() {
   const { user } = useAuth();
   const [location, setLocation] = useState(null);
-  const { properties, isLoading } = useProperties(location?.id ?? null);
+  const [searchParams] = useSearchParams();
+  const { properties, isLoading } = useProperties(location?.id ?? null, null, [], {
+    sort: readSort(searchParams),
+  });
   const recommendedProperties = properties;
   const displayName = user?.full_name || user?.email || 'tu cuenta';
 
@@ -150,6 +173,7 @@ function AuthenticatedHomePage() {
               </p>
             </div>
             <LocationSearchBar onLocationChange={setLocation} />
+            <SortSelect />
             <PropertyListing
               properties={recommendedProperties}
               isLoading={isLoading}
