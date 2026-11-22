@@ -126,6 +126,12 @@ SORT_COLUMNS = {
 }
 
 
+def check_range(message: str, minimum: float | None, maximum: float | None) -> None:
+    """Un rango con el mínimo por encima del máximo no tiene resultados posibles (US 1.5.1)."""
+    if minimum is not None and maximum is not None and minimum > maximum:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=message)
+
+
 def in_location(location_id: int) -> ColumnElement[bool]:
     # una ciudad abarca sus barrios y codigos postales, un barrio o un cp solo a si mismo
     area = select(Location.id).where(
@@ -207,8 +213,25 @@ def list_properties(
         SortOrder,
         Query(description="Orden: más recientes, precio o superficie (US 1.6)"),
     ] = "newest",
+    min_price: Annotated[float | None, Query(ge=0, description="Precio mínimo (€)")] = None,
+    max_price: Annotated[float | None, Query(ge=0, description="Precio máximo (€)")] = None,
+    min_rooms: Annotated[int | None, Query(ge=0, le=50, description="Habitaciones mínimas")] = None,
+    min_surface: Annotated[int | None, Query(ge=0, description="Superficie mínima (m²)")] = None,
+    max_surface: Annotated[int | None, Query(ge=0, description="Superficie máxima (m²)")] = None,
 ) -> PaginatedProperties:
+    check_range("El precio mínimo no puede ser mayor que el máximo", min_price, max_price)
+    check_range("La superficie mínima no puede ser mayor que la máxima", min_surface, max_surface)
     query = select(Property).where(Property.is_active.is_(True))
+    if min_price is not None:
+        query = query.where(Property.price >= min_price)
+    if max_price is not None:
+        query = query.where(Property.price <= max_price)
+    if min_rooms is not None:
+        query = query.where(Property.bedrooms >= min_rooms)
+    if min_surface is not None:
+        query = query.where(Property.area >= min_surface)
+    if max_surface is not None:
+        query = query.where(Property.area <= max_surface)
     if location_id is not None:
         query = query.where(in_location(location_id))
     if operation_type is not None:
