@@ -98,13 +98,15 @@ test('un usuario autenticado puede publicar un inmueble', async ({
   // Completamos los datos del inmueble.
   await page.locator('#property-price').fill('250000');
   await page.locator('#property-surface').fill('85');
+  await page.getByRole('combobox', { name: /buscar por ubicación/i }).fill('Barcelona');
+  await page.getByRole('option', { name: /Barcelona/ }).click();
   await page.locator('#property-address').fill('Carrer de prova 10');
   await page
     .locator('#property-description')
     .fill('Piso luminoso de dos habitaciones con terraza.');
 
   const publishResponsePromise = page.waitForResponse((response) =>
-    response.url().includes('/api/properties') &&
+    response.url().includes('/api/v1/properties') &&
     response.request().method() === 'POST'
   );
 
@@ -113,6 +115,21 @@ test('un usuario autenticado puede publicar un inmueble', async ({
   const publishResponse = await publishResponsePromise;
 
   expect(publishResponse.ok()).toBeTruthy();
+  const submittedProperty = publishResponse.request().postDataJSON();
+  expect(submittedProperty).toMatchObject({
+    title: 'Piso en venta',
+    operation_type: 'sale',
+    property_type: 'flat',
+    description: 'Piso luminoso de dos habitaciones con terraza.',
+    address: 'Carrer de prova 10',
+    price: 250000,
+    bedrooms: 0,
+    bathrooms: 0,
+    area: 85,
+    image_url: null,
+  });
+  expect(submittedProperty.location_id).toEqual(expect.any(Number));
+  expect(submittedProperty.location_id).toBeGreaterThan(0);
 
   await expect(
     page.getByRole('status')
