@@ -42,9 +42,11 @@ def valid_payload(location_id: int) -> dict:
     return {
         "title": "  Piso luminoso de prueba  ",
         "location_id": location_id,
+        "operation_type": "sale",
+        "property_type": "flat",
+        "description": "Un piso luminoso de prueba.",
+        "address": "Carrer de prova 10",
         "price": "275000.50",
-        "bedrooms": 3,
-        "bathrooms": 2,
         "area": 90,
         "image_url": "https://example.com/property.jpg",
     }
@@ -72,6 +74,12 @@ def test_publish_property_returns_201_and_is_listed_for_its_city(
     assert stored.owner_id == user.id
     assert stored.neighborhood_id == neighborhood.id
     assert stored.postal_code_id is None
+    assert stored.operation_type == "sale"
+    assert stored.property_type == "flat"
+    assert stored.description == "Un piso luminoso de prueba."
+    assert stored.address == "Carrer de prova 10"
+    assert stored.bedrooms == 0
+    assert stored.bathrooms == 0
 
     listed = client.get(PROPERTIES, params={"location_id": city.id, "limit": 50})
     assert listed.status_code == 200
@@ -97,9 +105,23 @@ def test_publish_property_without_token_is_401(
         {"price": -1},
         {"area": 0},
         {"title": None},
+        {"operation_type": "purchase"},
+        {"property_type": "apartment"},
+        {"description": "   "},
+        {"address": "abc"},
         {"unexpected": "not allowed"},
     ],
-    ids=["zero-price", "negative-price", "zero-area", "missing-title", "extra-field"],
+    ids=[
+        "zero-price",
+        "negative-price",
+        "zero-area",
+        "missing-title",
+        "invalid-operation",
+        "invalid-property-type",
+        "empty-description",
+        "short-address",
+        "extra-field",
+    ],
 )
 def test_publish_property_rejects_invalid_payload(
     client: TestClient,  # noqa: F811

@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, StringConstraints, computed_field
@@ -17,6 +17,10 @@ DbSession = Annotated[Session, Depends(get_db)]
 Title = Annotated[str, StringConstraints(strip_whitespace=True, min_length=5, max_length=120)]
 Price = Annotated[Decimal, Field(gt=0, le=Decimal("99999999.99"))]
 ImageUrl = Annotated[HttpUrl, Field(max_length=500)]
+PropertyDescription = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=10_000)
+]
+Address = Annotated[str, StringConstraints(strip_whitespace=True, min_length=5, max_length=160)]
 
 CREATE_RESPONSES = {
     201: {"description": "Anuncio publicado"},
@@ -32,9 +36,13 @@ class PropertyCreate(BaseModel):
 
     title: Title
     location_id: int = Field(ge=1)
+    operation_type: Literal["sale", "rent"]
+    property_type: Literal["flat", "house", "local", "office", "garage", "storage"]
+    description: PropertyDescription
+    address: Address
     price: Price
-    bedrooms: int = Field(ge=0, le=50)
-    bathrooms: int = Field(ge=0, le=50)
+    bedrooms: int = Field(default=0, ge=0, le=50)
+    bathrooms: int = Field(default=0, ge=0, le=50)
     area: int = Field(ge=1, le=100_000)
     image_url: ImageUrl | None = None
 
@@ -110,6 +118,10 @@ def create_property(payload: PropertyCreate, user: CurrentUser, db: DbSession) -
 
     location_text, neighborhood_id, postal_code_id = location_values(db, selected_location)
     property_ = Property(
+        operation_type=payload.operation_type,
+        property_type=payload.property_type,
+        description=payload.description,
+        address=payload.address,
         title=payload.title,
         location=location_text,
         price=payload.price,

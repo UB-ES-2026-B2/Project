@@ -1,0 +1,12 @@
+# Copia diaria de Postgres del entorno %i, de madrugada (hora UTC).
+[Unit]
+Description=Copia diaria de Postgres de es-b2-%i
+
+[Timer]
+OnCalendar=*-*-* 03:30:00 UTC
+RandomizedDelaySec=15min
+# Si la EC2 estaba apagada a esa hora, la copia se hace al arrancar.
+Persistent=true
+
+[Install]
+WantedBy=timers.target
