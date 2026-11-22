@@ -1,0 +1,15 @@
+# Copia de la base de datos del entorno %i al bucket de copias.
+# Lo lanza es-b2-backup@%i.timer. Ver infra/ec2/backup-db.sh.
+[Unit]
+Description=Copia de Postgres de es-b2-%i a S3
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/app/%i/backup-db.sh %i
+# Que una copia lenta no se quede colgada para siempre.
+TimeoutStartSec=30min
+Nice=10
+IOSchedulingClass=idle
