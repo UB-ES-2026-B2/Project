@@ -1,7 +1,8 @@
+from datetime import datetime
 from decimal import Decimal
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, StringConstraints, computed_field
 from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.orm import Session
@@ -62,6 +63,7 @@ class PropertyResponse(BaseModel):
     bathrooms: int
     area: int
     image_url: str | None
+    is_active: bool = True
 
     @computed_field
     @property
@@ -72,6 +74,28 @@ class PropertyResponse(BaseModel):
     @property
     def has_price_drop(self) -> bool:
         return self.previous_price is not None and self.previous_price > self.price
+
+
+class PropertyDetailResponse(PropertyResponse):
+    """Ficha completa del inmueble (US 5.1.1)."""
+
+    operation_type: str | None
+    property_type: str | None
+    description: str | None
+    address: str | None
+    created_at: datetime
+    images: list[str]
+
+
+DETAIL_RESPONSES = {404: {"description": "El inmueble no existe"}}
+
+
+def image_urls(property_: Property) -> list[str]:
+    """Fotos en orden (la primera es la portada); si no hay, la imagen de la tarjeta."""
+    urls = [image.url for image in property_.images]
+    if not urls and property_.image_url:
+        urls = [property_.image_url]
+    return urls
 
 
 class PaginatedProperties(BaseModel):
@@ -152,7 +176,7 @@ def list_properties(
         description="Id de una sugerencia de GET /api/v1/locations/suggest",
     ),
 ) -> PaginatedProperties:
-    query = select(Property)
+    query = select(Property).where(Property.is_active.is_(True))
     if location_id is not None:
         query = query.where(in_location(location_id))
 
@@ -163,3 +187,26 @@ def list_properties(
         .limit(limit)
     ).all()
     return PaginatedProperties(items=properties, page=page, limit=limit, total=total)
+
+
+@router.get("/{property_id}", response_model=PropertyDetailResponse, responses=DETAIL_RESPONSES)
+def get_property(
+    db: DbSession,
+    property_id: Annotated[int, Path(ge=1, le=2_147_483_647)],
+) -> PropertyDetailResponse:
+    """Ficha del inmueble. Un anuncio desactivado se devuelve con `is_active: false`."""
+    property_ = db.get(Property, property_id)
+    if property_ is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El inmueble no existe")
+    base = PropertyResponse.model_validate(property_).model_dump(
+        exclude={"price_per_m2", "has_price_drop"}
+    )
+    return PropertyDetailResponse(
+        **base,
+        operation_type=property_.operation_type,
+        property_type=property_.property_type,
+        description=property_.description,
+        address=property_.address,
+        created_at=property_.created_at,
+        images=image_urls(property_),
+    )
