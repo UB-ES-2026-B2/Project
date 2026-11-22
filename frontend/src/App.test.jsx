@@ -159,6 +159,21 @@ describe('initial screen', () => {
     window.history.replaceState(null, '', '/');
   });
 
+  it('passes the numeric filters in the URL to the catalog (US 1.5.2)', () => {
+    window.history.replaceState(null, '', '/?min_price=100000&min_rooms=2');
+    useProperties.mockReturnValue({ properties: [], isLoading: false });
+
+    renderApp();
+
+    expect(screen.getByRole('button', { name: 'Precio y tamaño (2)' })).toBeInTheDocument();
+    expect(useProperties).toHaveBeenLastCalledWith(null, null, [], {
+      sort: 'newest',
+      min_price: '100000',
+      min_rooms: '2',
+    });
+    window.history.replaceState(null, '', '/');
+  });
+
   it('passes the chosen order to the catalog (US 1.6)', () => {
     window.history.replaceState(null, '', '/?sort=price_desc');
     useProperties.mockReturnValue({ properties: [], isLoading: false });
