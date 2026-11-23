@@ -169,4 +169,23 @@ describe('initial screen', () => {
     expect(useProperties).toHaveBeenLastCalledWith(null, null, [], { sort: 'price_desc' });
     window.history.replaceState(null, '', '/');
   });
+
+  it('shows and applies operation and property type filters on the personalized home', () => {
+    localStorage.setItem('access_token', 'test-token');
+    window.history.replaceState(null, '', '/?operation_type=sale&property_types=flat');
+    useProperties.mockReturnValue({ properties: [], isLoading: false });
+
+    renderApp();
+
+    expect(screen.getByRole('tab', { name: 'Compra' })).toHaveAttribute('aria-selected', 'true');
+    expect(useProperties).toHaveBeenLastCalledWith(null, 'sale', ['flat'], { sort: 'newest' });
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Alquiler' }));
+
+    expect(screen.getByRole('tab', { name: 'Alquiler' })).toHaveAttribute('aria-selected', 'true');
+    expect(new URLSearchParams(window.location.search).get('operation_type')).toBe('rent');
+    expect(useProperties).toHaveBeenLastCalledWith(null, 'rent', ['flat'], { sort: 'newest' });
+
+    window.history.replaceState(null, '', '/');
+  });
 });

@@ -9,6 +9,8 @@ type FavoriteButtonProps = {
   isFavorite: boolean;
   isAuthenticated: boolean;
   onRequireAuth?: () => void;
+  onBeforeRemove?: () => Promise<void> | void;
+  onToggleSettled?: (success: boolean) => void;
 };
 
 type FavoriteMutation = {
@@ -21,6 +23,8 @@ function FavoriteButton({
   isFavorite: initialFavorite,
   isAuthenticated,
   onRequireAuth,
+  onBeforeRemove,
+  onToggleSettled,
 }: FavoriteButtonProps) {
   const queryClient = useQueryClient();
   const [error, setError] = useState(false);
@@ -51,8 +55,12 @@ function FavoriteButton({
     onError: (_error, _variables, context) => {
       queryClient.setQueryData(FAVORITES_QUERY_KEY, context?.previous);
       setError(true);
+      onToggleSettled?.(false);
     },
-    onSuccess: () => setError(false),
+    onSuccess: () => {
+      setError(false);
+      onToggleSettled?.(true);
+    },
     onSettled: () => queryClient.invalidateQueries({ queryKey: FAVORITES_QUERY_KEY }),
   });
 
@@ -66,7 +74,14 @@ function FavoriteButton({
       onRequireAuth?.();
       return;
     }
-    mutation.mutate({ id, nextFavorite: !isFavorite });
+    const nextFavorite = !isFavorite;
+    if (isFavorite && onBeforeRemove) {
+      Promise.resolve(onBeforeRemove()).then(() => {
+        mutation.mutate({ id, nextFavorite });
+      });
+      return;
+    }
+    mutation.mutate({ id, nextFavorite });
   };
 
   return (

@@ -50,13 +50,13 @@ describe('useSearchParams', () => {
     expect(result.current[0].get('location')).toBe('sitges');
   });
 
-  it('keeps every instance in sync when one of them changes the URL', () => {
-    const { result: filters } = renderHook(() => useSearchParams());
-    const { result: listing } = renderHook(() => useSearchParams());
+  it('synchronizes hook instances when one updates the search params', () => {
+    const first = renderHook(() => useSearchParams());
+    const second = renderHook(() => useSearchParams());
 
-    act(() => filters.current[1]({ operation_type: 'rent' }));
+    act(() => first.result.current[1]({ location: 'barcelona' }));
 
-    expect(listing.current[0].get('operation_type')).toBe('rent');
+    expect(second.result.current[0].get('location')).toBe('barcelona');
   });
 });
 
