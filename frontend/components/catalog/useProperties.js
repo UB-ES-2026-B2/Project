@@ -11,11 +11,20 @@ function toCardProperty(property) {
 }
 
 /**
- * URL del catálogo. `options` añade el resto de parámetros de GET /api/v1/properties
- * (p. ej. `{ sort: 'price_asc' }`); los vacíos no se envían.
+ * URL del catálogo. El segundo argumento es el tipo de operación o, si es un número, el límite.
+ * `options` añade el resto de parámetros de GET /api/v1/properties (p. ej. `{ sort: 'price_asc' }`);
+ * los vacíos no se envían.
+ * @param {string | null} locationId
+ * @param {string | number | null} operationTypeOrLimit
+ * @param {string[]} propertyTypes
+ * @param {Record<string, string | number | null | undefined>} options
  */
-export function propertiesUrl(locationId, operationType = null, propertyTypes = [], options = {}) {
-  const params = new URLSearchParams({ page: '1', limit: '12' });
+export function propertiesUrl(locationId, operationTypeOrLimit = null, propertyTypes = [], options = {}) {
+  const operationType = typeof operationTypeOrLimit === 'string'
+    ? operationTypeOrLimit
+    : null;
+  const limit = typeof operationTypeOrLimit === 'number' ? operationTypeOrLimit : 12;
+  const params = new URLSearchParams({ page: '1', limit: String(limit) });
   if (locationId) params.set('location_id', locationId);
   if (operationType) params.set('operation_type', operationType);
   propertyTypes.forEach((propertyType) => params.append('property_types', propertyType));
@@ -25,8 +34,14 @@ export function propertiesUrl(locationId, operationType = null, propertyTypes = 
   return `/api/v1/properties?${params}`;
 }
 
-function useProperties(locationId = null, operationType = null, propertyTypes = [], options = {}) {
-  const url = propertiesUrl(locationId, operationType, propertyTypes, options);
+/**
+ * @param {string | null} locationId
+ * @param {string | number | null} operationTypeOrLimit
+ * @param {string[]} propertyTypes
+ * @param {Record<string, string | number | null | undefined>} options
+ */
+function useProperties(locationId = null, operationTypeOrLimit = null, propertyTypes = [], options = {}) {
+  const url = propertiesUrl(locationId, operationTypeOrLimit, propertyTypes, options);
   const [result, setResult] = useState({ url: null, properties: [] });
 
   useEffect(() => {

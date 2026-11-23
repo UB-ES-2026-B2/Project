@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 
-/** Evento con el que todas las instancias del hook se enteran de un cambio en la URL. */
-export const SEARCH_PARAMS_EVENT = 'searchparamschange';
-
 type SearchParamsInit = URLSearchParams | Record<string, string>;
 type SetSearchParams = (next: SearchParamsInit) => void;
+
+const SEARCH_PARAMS_CHANGE_EVENT = 'searchparamschange';
 
 function readSearchParams() {
   return new URLSearchParams(window.location.search);
@@ -14,12 +13,12 @@ function useSearchParams(): [URLSearchParams, SetSearchParams] {
   const [searchParams, setSearchParamsState] = useState(readSearchParams);
 
   useEffect(() => {
-    const handlePopState = () => setSearchParamsState(readSearchParams());
-    window.addEventListener('popstate', handlePopState);
-    window.addEventListener(SEARCH_PARAMS_EVENT, handlePopState);
+    const handleChange = () => setSearchParamsState(readSearchParams());
+    window.addEventListener('popstate', handleChange);
+    window.addEventListener(SEARCH_PARAMS_CHANGE_EVENT, handleChange);
     return () => {
-      window.removeEventListener('popstate', handlePopState);
-      window.removeEventListener(SEARCH_PARAMS_EVENT, handlePopState);
+      window.removeEventListener('popstate', handleChange);
+      window.removeEventListener(SEARCH_PARAMS_CHANGE_EVENT, handleChange);
     };
   }, []);
 
@@ -28,9 +27,8 @@ function useSearchParams(): [URLSearchParams, SetSearchParams] {
     const query = params.toString();
     const url = `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`;
     window.history.replaceState(window.history.state, '', url);
+    window.dispatchEvent(new Event(SEARCH_PARAMS_CHANGE_EVENT));
     setSearchParamsState(params);
-    // Los filtros y el listado usan instancias distintas del hook: así se sincronizan.
-    window.dispatchEvent(new Event(SEARCH_PARAMS_EVENT));
   }, []);
 
   return [searchParams, setSearchParams];

@@ -21,18 +21,22 @@ function HomePage() {
   return <PublicHomePage />;
 }
 
-function PublicHomePage() {
-  const { isAuthenticated } = useAuth();
-  // US 1.3.2: la ubicación elegida en el buscador filtra los anuncios (location_id).
-  const [location, setLocation] = useState(null);
-  const [searchParams] = useSearchParams();
+function getPropertyFilters(searchParams) {
   const operationParam = searchParams.get('operation_type');
-  const filters = {
+  return {
     operationType: operationParam === 'sale' || operationParam === 'rent'
       ? operationParam
       : null,
     propertyTypes: searchParams.getAll('property_types'),
   };
+}
+
+function PublicHomePage() {
+  const { isAuthenticated } = useAuth();
+  // US 1.3.2: la ubicación elegida en el buscador filtra los anuncios (location_id).
+  const [location, setLocation] = useState(null);
+  const [searchParams] = useSearchParams();
+  const filters = getPropertyFilters(searchParams);
   const { properties, isLoading } = useProperties(
     location?.id ?? null,
     filters.operationType,
@@ -139,9 +143,13 @@ function AuthenticatedHomePage() {
   const { user } = useAuth();
   const [location, setLocation] = useState(null);
   const [searchParams] = useSearchParams();
-  const { properties, isLoading } = useProperties(location?.id ?? null, null, [], {
-    sort: readSort(searchParams),
-  });
+  const filters = getPropertyFilters(searchParams);
+  const { properties, isLoading } = useProperties(
+    location?.id ?? null,
+    filters.operationType,
+    filters.propertyTypes,
+    { sort: readSort(searchParams), ...readNumericFilters(searchParams) },
+  );
   const recommendedProperties = properties;
   const displayName = user?.full_name || user?.email || 'tu cuenta';
 
@@ -175,7 +183,11 @@ function AuthenticatedHomePage() {
               </p>
             </div>
             <LocationSearchBar onLocationChange={setLocation} />
-            <SortSelect />
+            <div className="catalog-toolbar">
+              <OperationAndTypeFilter />
+              <NumericFilterDropdown />
+              <SortSelect />
+            </div>
             <PropertyListing
               properties={recommendedProperties}
               isLoading={isLoading}
