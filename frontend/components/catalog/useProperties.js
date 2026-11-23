@@ -10,14 +10,14 @@ function toCardProperty(property) {
   };
 }
 
-export function propertiesUrl(locationId) {
-  const params = new URLSearchParams({ page: '1', limit: '12' });
+export function propertiesUrl(locationId, limit = 12) {
+  const params = new URLSearchParams({ page: '1', limit: String(limit) });
   if (locationId) params.set('location_id', locationId);
   return `/api/v1/properties?${params}`;
 }
 
-function useProperties(locationId = null) {
-  const url = propertiesUrl(locationId);
+function useProperties(locationId = null, limit = 12) {
+  const url = propertiesUrl(locationId, limit);
   const [result, setResult] = useState({ url: null, properties: [] });
 
   useEffect(() => {
