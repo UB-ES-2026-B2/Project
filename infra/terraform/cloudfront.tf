@@ -29,4 +29,7 @@ module "site" {
   origin_access_control_id          = aws_cloudfront_origin_access_control.s3.id
   spa_rewrite_function_arn          = aws_cloudfront_function.spa_rewrite.arn
   media_bucket_regional_domain_name = aws_s3_bucket.media.bucket_regional_domain_name
+  api_origin_domain                 = var.api_origin_domain
+  api_port                          = each.value.api_port
+  media_response_headers_policy_id  = var.media_response_headers_policy_id
 }
