@@ -26,6 +26,7 @@ function UserMenu() {
           <span className="user-menu__chevron" aria-hidden="true">⌄</span>
         </summary>
         <div className="user-menu__dropdown">
+          <a className="user-menu__dropdown-link" href="/favoritos">Mis favoritos</a>
           <a className="user-menu__dropdown-link" href="/publicar">Publicar anuncio</a>
           <a className="user-menu__dropdown-link" href="/mis-anuncios">Mis anuncios</a>
           <button className="user-menu__logout" type="button" onClick={logout}>
