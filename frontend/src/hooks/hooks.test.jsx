@@ -49,6 +49,15 @@ describe('useSearchParams', () => {
 
     expect(result.current[0].get('location')).toBe('sitges');
   });
+
+  it('synchronizes hook instances when one updates the search params', () => {
+    const first = renderHook(() => useSearchParams());
+    const second = renderHook(() => useSearchParams());
+
+    act(() => first.result.current[1]({ location: 'barcelona' }));
+
+    expect(second.result.current[0].get('location')).toBe('barcelona');
+  });
 });
 
 describe('propertiesUrl', () => {
@@ -56,6 +65,12 @@ describe('propertiesUrl', () => {
     expect(propertiesUrl(null)).toBe('/api/v1/properties?page=1&limit=12');
     expect(propertiesUrl('loc-bcn')).toBe(
       '/api/v1/properties?page=1&limit=12&location_id=loc-bcn',
+    );
+  });
+
+  it('adds operation and repeated property type filters', () => {
+    expect(propertiesUrl(null, 'sale', ['flat', 'office'])).toBe(
+      '/api/v1/properties?page=1&limit=12&operation_type=sale&property_types=flat&property_types=office',
     );
   });
 });

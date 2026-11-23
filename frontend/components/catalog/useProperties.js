@@ -10,14 +10,30 @@ function toCardProperty(property) {
   };
 }
 
-export function propertiesUrl(locationId, limit = 12) {
+/**
+ * @param {string | null} locationId
+ * @param {string | number | null} operationTypeOrLimit
+ * @param {string[]} propertyTypes
+ */
+export function propertiesUrl(locationId, operationTypeOrLimit = null, propertyTypes = []) {
+  const operationType = typeof operationTypeOrLimit === 'string'
+    ? operationTypeOrLimit
+    : null;
+  const limit = typeof operationTypeOrLimit === 'number' ? operationTypeOrLimit : 12;
   const params = new URLSearchParams({ page: '1', limit: String(limit) });
   if (locationId) params.set('location_id', locationId);
+  if (operationType) params.set('operation_type', operationType);
+  propertyTypes.forEach((propertyType) => params.append('property_types', propertyType));
   return `/api/v1/properties?${params}`;
 }
 
-function useProperties(locationId = null, limit = 12) {
-  const url = propertiesUrl(locationId, limit);
+/**
+ * @param {string | null} locationId
+ * @param {string | number | null} operationTypeOrLimit
+ * @param {string[]} propertyTypes
+ */
+function useProperties(locationId = null, operationTypeOrLimit = null, propertyTypes = []) {
+  const url = propertiesUrl(locationId, operationTypeOrLimit, propertyTypes);
   const [result, setResult] = useState({ url: null, properties: [] });
 
   useEffect(() => {
