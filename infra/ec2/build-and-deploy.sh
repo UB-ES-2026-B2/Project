@@ -31,8 +31,18 @@ curl -fsSL --retry 3 "https://codeload.github.com/$REPO/tar.gz/$SHA" |
 mkdir -p "/opt/app/$ENV"
 install -m 0644 "$WORK/docker-compose.prod.yml" "/opt/app/$ENV/docker-compose.prod.yml"
 install -m 0755 "$WORK/infra/ec2/deploy.sh" "/opt/app/$ENV/deploy.sh"
+install -m 0755 "$WORK/infra/ec2/backup-db.sh" "/opt/app/$ENV/backup-db.sh"
 
 echo "==> Construyendo $IMAGE_REPO:$SHA"
 docker build --pull -t "$IMAGE_REPO:$SHA" "$WORK/backend"
 
 SKIP_PULL=1 IMAGE_REPO="$IMAGE_REPO" "/opt/app/$ENV/deploy.sh" "$ENV" "$SHA"
+
+# Copia diaria de la base de datos (es-b2-backup@<entorno>.timer). Va después del
+# despliegue para que un fallo aquí no tumbe una versión que ya está sana.
+echo "==> Activando la copia diaria de $ENV"
+install -m 0644 "$WORK/infra/ec2/systemd/es-b2-backup@.service" /etc/systemd/system/
+install -m 0644 "$WORK/infra/ec2/systemd/es-b2-backup@.timer" /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable --now "es-b2-backup@$ENV.timer"
+systemctl list-timers "es-b2-backup@$ENV.timer" --no-pager || true
