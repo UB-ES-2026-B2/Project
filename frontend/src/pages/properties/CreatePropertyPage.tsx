@@ -101,7 +101,7 @@ function CreatePropertyPage() {
     setServerError('');
     setSuccessMessage('');
     try {
-      const response = await apiFetch('/api/properties', {
+      const response = await apiFetch('/api/v1/properties', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

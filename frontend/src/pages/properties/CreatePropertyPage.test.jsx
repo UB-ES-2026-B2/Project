@@ -85,7 +85,7 @@ describe('CreatePropertyPage', () => {
       'Tu anuncio se ha publicado correctamente.',
     );
     await waitFor(() => {
-      const request = fetch.mock.calls.find(([url]) => url === '/api/properties');
+      const request = fetch.mock.calls.find(([url]) => url === '/api/v1/properties');
       expect(request).toBeDefined();
       expect(request[1].method).toBe('POST');
       expect(request[1].headers.get('Authorization')).toBe('Bearer test-token');
