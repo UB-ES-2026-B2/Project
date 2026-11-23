@@ -24,6 +24,8 @@ dependencies = [
   "email-validator>=2.3.0,<3",
   # formulario OAuth2 de POST /api/auth/login (botón Authorize de Swagger)
   "python-multipart>=0.0.20",
+  # URLs prefirmadas de S3 para subir las fotos desde el navegador (US 6.2.1)
+  "boto3>=1.40",
 ]
 
 [project.optional-dependencies]

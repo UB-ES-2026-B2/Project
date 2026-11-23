@@ -1,4 +1,4 @@
-"""US 1.2.1: guardar y quitar inmuebles favoritos del usuario autenticado."""
+"""US 1.2.1 y 1.7.1: favoritos del usuario autenticado."""
 
 from typing import Annotated
 
@@ -9,6 +9,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.api.routes.auth import CurrentUser
+from app.api.routes.properties import PropertyResponse
 from app.db.session import get_db
 from app.models.favorite import Favorite
 from app.models.property import Property
@@ -28,6 +29,10 @@ class FavoriteIds(BaseModel):
     property_ids: list[int]
 
 
+class FavoriteProperties(BaseModel):
+    items: list[PropertyResponse]
+
+
 def ensure_property_exists(db: Session, property_id: int) -> None:
     if db.get(Property, property_id) is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=NOT_FOUND)
@@ -42,6 +47,22 @@ def list_favorites(user: CurrentUser, db: DbSession) -> FavoriteIds:
         .order_by(Favorite.created_at.desc(), Favorite.property_id.desc())
     ).all()
     return FavoriteIds(property_ids=list(ids))
+
+
+@router.get("/me", response_model=FavoriteProperties, responses={401: AUTH_RESPONSES[401]})
+def list_favorite_properties(user: CurrentUser, db: DbSession) -> FavoriteProperties:
+    """Inmuebles favoritos con sus datos, del más reciente al más antiguo (US 1.7.1).
+
+    Incluye los anuncios desactivados con `is_active: false`, para que la página de
+    favoritos los muestre como no disponibles en lugar de hacerlos desaparecer.
+    """
+    properties = db.scalars(
+        select(Property)
+        .join(Favorite, Favorite.property_id == Property.id)
+        .where(Favorite.user_id == user.id)
+        .order_by(Favorite.created_at.desc(), Favorite.property_id.desc())
+    ).all()
+    return FavoriteProperties(items=[PropertyResponse.model_validate(p) for p in properties])
 
 
 @router.post(
