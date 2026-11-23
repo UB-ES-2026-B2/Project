@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import SiteFooter from '../../../components/landing/SiteFooter';
 import SiteHeader from '../../../components/landing/SiteHeader';
+import LocationSearchBar, { type LocationSuggestion } from '../../components/search/LocationSearchBar';
 import { apiFetch } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import PropertyFormPreview from './PropertyFormPreview';
@@ -12,6 +13,7 @@ type PropertyFormValues = {
   price: string;
   surface: string;
   address: string;
+  locationId: string;
   description: string;
 };
 
@@ -19,17 +21,17 @@ type PropertyFormErrors = Partial<Record<keyof PropertyFormValues, string>>;
 type PropertyField = keyof PropertyFormValues;
 
 const OPERATIONS = [
-  { value: 'venta', label: 'Venta' },
-  { value: 'alquiler', label: 'Alquiler' },
+  { value: 'venta', apiValue: 'sale', label: 'Venta' },
+  { value: 'alquiler', apiValue: 'rent', label: 'Alquiler' },
 ];
 
 const SPACE_TYPES = [
-  { value: 'piso', label: 'Piso' },
-  { value: 'casa', label: 'Casa' },
-  { value: 'local', label: 'Local' },
-  { value: 'oficina', label: 'Oficina' },
-  { value: 'garaje', label: 'Garaje' },
-  { value: 'trastero', label: 'Trastero' },
+  { value: 'piso', apiValue: 'flat', label: 'Piso' },
+  { value: 'casa', apiValue: 'house', label: 'Casa' },
+  { value: 'local', apiValue: 'local', label: 'Local' },
+  { value: 'oficina', apiValue: 'office', label: 'Oficina' },
+  { value: 'garaje', apiValue: 'garage', label: 'Garaje' },
+  { value: 'trastero', apiValue: 'storage', label: 'Trastero' },
 ];
 
 const INITIAL_VALUES: PropertyFormValues = {
@@ -38,6 +40,7 @@ const INITIAL_VALUES: PropertyFormValues = {
   price: '',
   surface: '',
   address: '',
+  locationId: '',
   description: '',
 };
 
@@ -45,16 +48,27 @@ function validate(values: PropertyFormValues): PropertyFormErrors {
   const errors: PropertyFormErrors = {};
   const price = Number(values.price);
   const surface = Number(values.surface);
+  const locationId = Number(values.locationId);
+  const address = values.address.trim();
 
-  if (!values.operation) errors.operation = 'Selecciona el tipo de operación.';
-  if (!values.spaceType) errors.spaceType = 'Selecciona el tipo de espacio.';
+  if (!OPERATIONS.some(({ value }) => value === values.operation)) {
+    errors.operation = 'Selecciona el tipo de operación.';
+  }
+  if (!SPACE_TYPES.some(({ value }) => value === values.spaceType)) {
+    errors.spaceType = 'Selecciona el tipo de espacio.';
+  }
   if (!values.price.trim() || !Number.isFinite(price) || price <= 0) {
     errors.price = 'Introduce un precio mayor que cero.';
   }
   if (!values.surface.trim() || !Number.isInteger(surface) || surface <= 0) {
     errors.surface = 'Introduce una superficie entera mayor que cero.';
   }
-  if (!values.address.trim()) errors.address = 'Introduce la dirección del inmueble.';
+  if (!Number.isInteger(locationId) || locationId <= 0) {
+    errors.locationId = 'Selecciona una ubicación de la lista.';
+  }
+  if (address.length < 5 || address.length > 160) {
+    errors.address = 'Introduce una dirección de entre 5 y 160 caracteres.';
+  }
   if (!values.description.trim()) errors.description = 'Introduce una descripción.';
 
   return errors;
@@ -79,6 +93,8 @@ function CreatePropertyPage() {
     && values.surface.trim()
     && Number.isInteger(Number(values.surface))
     && Number(values.surface) > 0
+    && Number.isInteger(Number(values.locationId))
+    && Number(values.locationId) > 0
     && values.address.trim(),
   );
 
@@ -93,24 +109,47 @@ function CreatePropertyPage() {
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => updateField(field, event.target.value);
 
+  const handleLocationChange = (location: LocationSuggestion | null) => {
+    setValues((current) => ({
+      ...current,
+      locationId: location?.id ?? '',
+    }));
+    setTouched((current) => ({ ...current, locationId: true }));
+    setServerError('');
+    setSuccessMessage('');
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (isSubmitting || !isValid) return;
+    if (isSubmitting) return;
+
+    const selectedOperation = OPERATIONS.find(({ value }) => value === values.operation);
+    const selectedSpaceType = SPACE_TYPES.find(({ value }) => value === values.spaceType);
+    if (!selectedOperation || !selectedSpaceType) {
+      setTouched((current) => ({ ...current, operation: true, spaceType: true }));
+      return;
+    }
+    if (!isValid) return;
 
     setIsSubmitting(true);
     setServerError('');
     setSuccessMessage('');
     try {
-      const response = await apiFetch('/api/properties', {
+      const response = await apiFetch('/api/v1/properties', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          operation: values.operation,
-          space_type: values.spaceType,
-          price: Number(values.price),
-          surface_m2: Number(values.surface),
-          address: values.address.trim(),
+          title: `${selectedSpaceType.label} en ${selectedOperation.label.toLowerCase()}`,
+          location_id: Number(values.locationId),
+          operation_type: selectedOperation.apiValue,
+          property_type: selectedSpaceType.apiValue,
           description: values.description.trim(),
+          address: values.address.trim(),
+          price: Number(values.price),
+          bedrooms: 0,
+          bathrooms: 0,
+          area: Number(values.surface),
+          image_url: null,
         }),
       });
 
@@ -291,12 +330,27 @@ function CreatePropertyPage() {
               </div>
 
               <div className="property-form__field property-form__field--full">
+                <LocationSearchBar
+                  onLocationChange={handleLocationChange}
+                  ariaInvalid={Boolean(visibleError('locationId'))}
+                  ariaDescribedBy={visibleError('locationId') ? 'property-location-error' : undefined}
+                  onBlur={() => setTouched((current) => ({ ...current, locationId: true }))}
+                />
+                {visibleError('locationId') && (
+                  <p id="property-location-error" className="property-form__error">
+                    {visibleError('locationId')}
+                  </p>
+                )}
+              </div>
+
+              <div className="property-form__field property-form__field--full">
                 <label htmlFor="property-address">Dirección</label>
                 <input
                   id="property-address"
                   name="address"
                   type="text"
                   autoComplete="street-address"
+                  maxLength={160}
                   value={values.address}
                   aria-required="true"
                   aria-invalid={Boolean(visibleError('address'))}
@@ -317,6 +371,7 @@ function CreatePropertyPage() {
                   id="property-description"
                   name="description"
                   rows={5}
+                  maxLength={10_000}
                   value={values.description}
                   aria-required="true"
                   aria-invalid={Boolean(visibleError('description'))}

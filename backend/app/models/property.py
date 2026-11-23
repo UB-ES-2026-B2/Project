@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, func
+from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -13,6 +13,13 @@ class Property(Base):
     __tablename__ = "properties"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    owner_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    operation_type: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    property_type: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    address: Mapped[str | None] = mapped_column(String(160), nullable=True)
     title: Mapped[str] = mapped_column(String(120))
     location: Mapped[str] = mapped_column(String(160))
     price: Mapped[Decimal] = mapped_column(Numeric(10, 2))
