@@ -12,18 +12,31 @@ function renderPage(authenticated = false) {
   );
 }
 
-function fillValidForm() {
+async function fillValidForm() {
   fireEvent.change(screen.getByLabelText('Operación'), { target: { value: 'venta' } });
   fireEvent.change(screen.getByLabelText('Tipo de espacio'), { target: { value: 'piso' } });
   fireEvent.change(screen.getByLabelText('Precio (€)'), { target: { value: '250000' } });
   fireEvent.change(screen.getByLabelText('Superficie (m²)'), { target: { value: '80' } });
-  fireEvent.change(screen.getByLabelText('Dirección'), { target: { value: 'Carrer de Mallorca 10, Barcelona' } });
+  fireEvent.change(screen.getByLabelText('Dirección'), {
+    target: { value: 'Carrer de Mallorca 10' },
+  });
+  fireEvent.change(screen.getByRole('combobox', { name: 'Buscar por ubicación' }), {
+    target: { value: 'Barcelona' },
+  });
+  fireEvent.click(await screen.findByRole('option', { name: /Barcelona/ }));
   fireEvent.change(screen.getByLabelText('Descripción'), { target: { value: 'Piso luminoso y reformado.' } });
 }
 
 beforeEach(() => {
   localStorage.clear();
   vi.stubGlobal('fetch', vi.fn(async (url) => {
+    if (String(url).startsWith('/api/v1/locations/suggest')) {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => [{ id: '12', name: 'Barcelona', type: 'city' }],
+      };
+    }
     if (url === '/api/auth/me') {
       return {
         ok: true,
@@ -63,9 +76,9 @@ describe('CreatePropertyPage', () => {
     expect(screen.queryByText('Introduce un precio mayor que cero.')).not.toBeInTheDocument();
   });
 
-  it('previews the local form data with the shared property card', () => {
+  it('previews the local form data with the shared property card', async () => {
     renderPage(true);
-    fillValidForm();
+    await fillValidForm();
 
     fireEvent.click(screen.getByRole('tab', { name: 'Modo Vista Previa' }));
 
@@ -75,9 +88,9 @@ describe('CreatePropertyPage', () => {
     expect(screen.queryByRole('button', { name: 'Añadir a favoritos' })).not.toBeInTheDocument();
   });
 
-  it('posts the valid form through the authenticated API client', async () => {
+  it('posts the valid form through the authenticated API client using the backend contract', async () => {
     renderPage(true);
-    fillValidForm();
+    await fillValidForm();
 
     fireEvent.click(screen.getByRole('button', { name: 'Publicar anuncio' }));
 
@@ -90,12 +103,17 @@ describe('CreatePropertyPage', () => {
       expect(request[1].method).toBe('POST');
       expect(request[1].headers.get('Authorization')).toBe('Bearer test-token');
       expect(JSON.parse(request[1].body)).toEqual({
-        operation: 'venta',
-        space_type: 'piso',
-        price: 250000,
-        surface_m2: 80,
-        address: 'Carrer de Mallorca 10, Barcelona',
+        title: 'Piso en venta',
+        location_id: 12,
+        operation_type: 'sale',
+        property_type: 'flat',
         description: 'Piso luminoso y reformado.',
+        address: 'Carrer de Mallorca 10',
+        price: 250000,
+        bedrooms: 0,
+        bathrooms: 0,
+        area: 80,
+        image_url: null,
       });
     });
   });
