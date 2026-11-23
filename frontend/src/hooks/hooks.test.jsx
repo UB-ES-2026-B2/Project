@@ -49,6 +49,15 @@ describe('useSearchParams', () => {
 
     expect(result.current[0].get('location')).toBe('sitges');
   });
+
+  it('synchronizes hook instances when one updates the search params', () => {
+    const first = renderHook(() => useSearchParams());
+    const second = renderHook(() => useSearchParams());
+
+    act(() => first.result.current[1]({ location: 'barcelona' }));
+
+    expect(second.result.current[0].get('location')).toBe('barcelona');
+  });
 });
 
 describe('propertiesUrl', () => {
