@@ -78,7 +78,7 @@ function PropertyDetailPage({ propertyId }: PropertyDetailPageProps) {
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/properties/' + encodeURIComponent(propertyId))
+    fetch('/api/v1/properties/' + encodeURIComponent(propertyId))
       .then((response) => {
         if (response.status === 404) {
           if (!cancelled) setNotFound(true);

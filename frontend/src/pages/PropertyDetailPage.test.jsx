@@ -45,7 +45,7 @@ describe('PropertyDetailPage', () => {
     renderPage();
 
     expect(await screen.findByRole('heading', { name: 'Ático soleado' })).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith('/api/properties/42');
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/properties/42');
     expect(screen.getByText('350.000 €')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Abrir foto 1' }));
