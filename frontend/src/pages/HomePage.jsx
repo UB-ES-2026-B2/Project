@@ -11,6 +11,7 @@ import AuthModal from '../AuthModal.jsx';
 import OperationAndTypeFilter from '../components/filters/OperationAndTypeFilter.tsx';
 import useSearchParams from '../hooks/useSearchParams.ts';
 import SortSelect, { readSort } from '../components/filters/SortSelect.tsx';
+import NumericFilterDropdown, { readNumericFilters } from '../components/filters/NumericFilterDropdown.tsx';
 
 function HomePage() {
   const { isAuthenticated } = useAuth();
@@ -36,7 +37,7 @@ function PublicHomePage() {
     location?.id ?? null,
     filters.operationType,
     filters.propertyTypes,
-    { sort: readSort(searchParams) },
+    { sort: readSort(searchParams), ...readNumericFilters(searchParams) },
   );
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
@@ -86,6 +87,7 @@ function PublicHomePage() {
             <LocationSearchBar onLocationChange={setLocation} />
             <div className="catalog-toolbar">
               <OperationAndTypeFilter />
+              <NumericFilterDropdown />
               <SortSelect />
             </div>
 
