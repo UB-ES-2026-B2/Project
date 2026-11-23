@@ -10,6 +10,8 @@ import { useAuth } from '../context/AuthContext.tsx';
 import AuthModal from '../AuthModal.jsx';
 import OperationAndTypeFilter from '../components/filters/OperationAndTypeFilter.tsx';
 import useSearchParams from '../hooks/useSearchParams.ts';
+import SortSelect, { readSort } from '../components/filters/SortSelect.tsx';
+import NumericFilterDropdown, { readNumericFilters } from '../components/filters/NumericFilterDropdown.tsx';
 
 function HomePage() {
   const { isAuthenticated } = useAuth();
@@ -39,6 +41,7 @@ function PublicHomePage() {
     location?.id ?? null,
     filters.operationType,
     filters.propertyTypes,
+    { sort: readSort(searchParams), ...readNumericFilters(searchParams) },
   );
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
@@ -86,7 +89,11 @@ function PublicHomePage() {
             </div>
 
             <LocationSearchBar onLocationChange={setLocation} />
-            <OperationAndTypeFilter />
+            <div className="catalog-toolbar">
+              <OperationAndTypeFilter />
+              <NumericFilterDropdown />
+              <SortSelect />
+            </div>
 
             {isLoading && (
               <div className="home-listing-grid">
@@ -141,6 +148,7 @@ function AuthenticatedHomePage() {
     location?.id ?? null,
     filters.operationType,
     filters.propertyTypes,
+    { sort: readSort(searchParams), ...readNumericFilters(searchParams) },
   );
   const recommendedProperties = properties;
   const displayName = user?.full_name || user?.email || 'tu cuenta';
@@ -175,7 +183,11 @@ function AuthenticatedHomePage() {
               </p>
             </div>
             <LocationSearchBar onLocationChange={setLocation} />
-            <OperationAndTypeFilter />
+            <div className="catalog-toolbar">
+              <OperationAndTypeFilter />
+              <NumericFilterDropdown />
+              <SortSelect />
+            </div>
             <PropertyListing
               properties={recommendedProperties}
               isLoading={isLoading}

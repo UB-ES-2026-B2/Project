@@ -136,7 +136,7 @@ describe('initial screen', () => {
 
     expect(screen.getByRole('combobox', { name: 'Buscar por ubicación' })).toBeInTheDocument();
     // Sin ubicación elegida, el catálogo se pide sin filtro.
-    expect(useProperties).toHaveBeenLastCalledWith(null, null, []);
+    expect(useProperties).toHaveBeenLastCalledWith(null, null, [], { sort: 'newest' });
     expect(screen.getByRole('heading', { name: 'Aún no hay anuncios disponibles' })).toBeInTheDocument();
   });
 
@@ -154,7 +154,34 @@ describe('initial screen', () => {
       null,
       'rent',
       ['flat', 'office'],
+      { sort: 'newest' },
     );
+    window.history.replaceState(null, '', '/');
+  });
+
+  it('passes the numeric filters in the URL to the catalog (US 1.5.2)', () => {
+    window.history.replaceState(null, '', '/?min_price=100000&min_rooms=2');
+    useProperties.mockReturnValue({ properties: [], isLoading: false });
+
+    renderApp();
+
+    expect(screen.getByRole('button', { name: 'Precio y tamaño (2)' })).toBeInTheDocument();
+    expect(useProperties).toHaveBeenLastCalledWith(null, null, [], {
+      sort: 'newest',
+      min_price: '100000',
+      min_rooms: '2',
+    });
+    window.history.replaceState(null, '', '/');
+  });
+
+  it('passes the chosen order to the catalog (US 1.6)', () => {
+    window.history.replaceState(null, '', '/?sort=price_desc');
+    useProperties.mockReturnValue({ properties: [], isLoading: false });
+
+    renderApp();
+
+    expect(screen.getByLabelText('Ordenar por')).toHaveValue('price_desc');
+    expect(useProperties).toHaveBeenLastCalledWith(null, null, [], { sort: 'price_desc' });
     window.history.replaceState(null, '', '/');
   });
 
@@ -166,13 +193,13 @@ describe('initial screen', () => {
     renderApp();
 
     expect(screen.getByRole('tab', { name: 'Compra' })).toHaveAttribute('aria-selected', 'true');
-    expect(useProperties).toHaveBeenLastCalledWith(null, 'sale', ['flat']);
+    expect(useProperties).toHaveBeenLastCalledWith(null, 'sale', ['flat'], { sort: 'newest' });
 
     fireEvent.click(screen.getByRole('tab', { name: 'Alquiler' }));
 
     expect(screen.getByRole('tab', { name: 'Alquiler' })).toHaveAttribute('aria-selected', 'true');
     expect(new URLSearchParams(window.location.search).get('operation_type')).toBe('rent');
-    expect(useProperties).toHaveBeenLastCalledWith(null, 'rent', ['flat']);
+    expect(useProperties).toHaveBeenLastCalledWith(null, 'rent', ['flat'], { sort: 'newest' });
 
     window.history.replaceState(null, '', '/');
   });

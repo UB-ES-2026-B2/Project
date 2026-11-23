@@ -11,11 +11,15 @@ function toCardProperty(property) {
 }
 
 /**
+ * URL del catálogo. El segundo argumento es el tipo de operación o, si es un número, el límite.
+ * `options` añade el resto de parámetros de GET /api/v1/properties (p. ej. `{ sort: 'price_asc' }`);
+ * los vacíos no se envían.
  * @param {string | null} locationId
  * @param {string | number | null} operationTypeOrLimit
  * @param {string[]} propertyTypes
+ * @param {Record<string, string | number | null | undefined>} options
  */
-export function propertiesUrl(locationId, operationTypeOrLimit = null, propertyTypes = []) {
+export function propertiesUrl(locationId, operationTypeOrLimit = null, propertyTypes = [], options = {}) {
   const operationType = typeof operationTypeOrLimit === 'string'
     ? operationTypeOrLimit
     : null;
@@ -24,6 +28,9 @@ export function propertiesUrl(locationId, operationTypeOrLimit = null, propertyT
   if (locationId) params.set('location_id', locationId);
   if (operationType) params.set('operation_type', operationType);
   propertyTypes.forEach((propertyType) => params.append('property_types', propertyType));
+  Object.entries(options).forEach(([name, value]) => {
+    if (value !== null && value !== undefined && value !== '') params.set(name, String(value));
+  });
   return `/api/v1/properties?${params}`;
 }
 
@@ -31,9 +38,10 @@ export function propertiesUrl(locationId, operationTypeOrLimit = null, propertyT
  * @param {string | null} locationId
  * @param {string | number | null} operationTypeOrLimit
  * @param {string[]} propertyTypes
+ * @param {Record<string, string | number | null | undefined>} options
  */
-function useProperties(locationId = null, operationTypeOrLimit = null, propertyTypes = []) {
-  const url = propertiesUrl(locationId, operationTypeOrLimit, propertyTypes);
+function useProperties(locationId = null, operationTypeOrLimit = null, propertyTypes = [], options = {}) {
+  const url = propertiesUrl(locationId, operationTypeOrLimit, propertyTypes, options);
   const [result, setResult] = useState({ url: null, properties: [] });
 
   useEffect(() => {

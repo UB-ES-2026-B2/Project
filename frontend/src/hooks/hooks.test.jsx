@@ -61,6 +61,11 @@ describe('useSearchParams', () => {
 });
 
 describe('propertiesUrl', () => {
+  it('adds the extra options and skips the empty ones', () => {
+    expect(propertiesUrl(null, null, [], { sort: 'price_asc', min_price: '', max_price: null }))
+      .toBe('/api/v1/properties?page=1&limit=12&sort=price_asc');
+  });
+
   it('adds a location filter only when a location is selected', () => {
     expect(propertiesUrl(null)).toBe('/api/v1/properties?page=1&limit=12');
     expect(propertiesUrl('loc-bcn')).toBe(
