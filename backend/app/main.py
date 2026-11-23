@@ -10,6 +10,7 @@ from app.api.routes.auth import router as auth_router
 from app.api.routes.favorites import router as favorites_router
 from app.api.routes.locations import router as locations_router
 from app.api.routes.properties import router as properties_router
+from app.api.routes.property_images import router as property_images_router
 from app.core.config import get_settings
 
 app = FastAPI(title="ES-B2 API", docs_url="/api/docs", openapi_url="/api/openapi.json")
@@ -38,6 +39,7 @@ def health(response: Response) -> dict[str, str]:
 
 
 api.include_router(properties_router)
+api.include_router(property_images_router)
 api.include_router(auth_router)
 api.include_router(favorites_router)
 api.include_router(locations_router)

@@ -117,4 +117,25 @@ describe('CreatePropertyPage', () => {
       });
     });
   });
+
+  it('offers the photo manager for the new listing once it is published', async () => {
+    fetch.mockImplementation(async (url) => {
+      if (String(url).startsWith('/api/v1/locations/suggest')) {
+        return { ok: true, status: 200, json: async () => [{ id: '12', name: 'Barcelona', type: 'city' }] };
+      }
+      if (url === '/api/auth/me') {
+        return { ok: true, status: 200, json: async () => ({ id: 1, email: 'owner@example.com' }) };
+      }
+      if (url === '/api/v1/properties/55/images') return { ok: true, status: 200, json: async () => [] };
+      return { ok: true, status: 201, json: async () => ({ id: 55 }) };
+    });
+    renderPage(true);
+    await fillValidForm();
+    expect(screen.queryByRole('heading', { name: 'Fotos del anuncio' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar anuncio' }));
+
+    expect(await screen.findByRole('heading', { name: 'Fotos del anuncio' })).toBeInTheDocument();
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/v1/properties/55/images'));
+  });
 });
