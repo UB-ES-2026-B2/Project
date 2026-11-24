@@ -12,7 +12,8 @@ export type Property = {
   area: number;
   images: string[];
   isFavorite?: boolean;
-};
+  is_active?: boolean;
+}
 
 type PropertyCardProps = {
   property: Property;
@@ -21,6 +22,9 @@ type PropertyCardProps = {
   onRequireAuth?: () => void;
   showFavorite?: boolean;
   showDetailsLink?: boolean;
+  isAvailable?: boolean;
+  onBeforeFavoriteRemove?: () => Promise<void> | void;
+  onFavoriteToggleSettled?: (success: boolean) => void;
 };
 
 const PLACEHOLDER_IMAGE = '/assets/property-placeholder.webp';
@@ -32,6 +36,9 @@ function PropertyCard({
   onRequireAuth,
   showFavorite = true,
   showDetailsLink = true,
+  isAvailable = true,
+  onBeforeFavoriteRemove,
+  onFavoriteToggleSettled,
 }: PropertyCardProps) {
   const [imageIndex, setImageIndex] = useState(0);
   const [imageFailed, setImageFailed] = useState(false);
@@ -96,12 +103,19 @@ function PropertyCard({
           onError={handleImageError}
           hidden={image === PLACEHOLDER_IMAGE && placeholderFailed}
         />
+        {!isAvailable && (
+          <div className="property-card__unavailable" aria-label="Propiedad no disponible">
+            Propiedad no disponible
+          </div>
+        )}
         {showFavorite && (
           <FavoriteButton
             propertyId={property.id}
             isFavorite={property.isFavorite ?? false}
             isAuthenticated={isAuthenticated}
             onRequireAuth={onRequireAuth}
+            onBeforeRemove={onBeforeFavoriteRemove}
+            onToggleSettled={onFavoriteToggleSettled}
           />
         )}
         {hasPriceDrop && (
