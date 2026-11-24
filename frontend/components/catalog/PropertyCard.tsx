@@ -7,18 +7,24 @@ export type Property = {
   location: string;
   price: number;
   previousPrice?: number;
-  bedrooms: number;
-  bathrooms: number;
+  bedrooms?: number;
+  bathrooms?: number;
   area: number;
   images: string[];
   isFavorite?: boolean;
-};
+  is_active?: boolean;
+}
 
 type PropertyCardProps = {
   property: Property;
   onSelect?: (property: Property) => void;
   isAuthenticated?: boolean;
   onRequireAuth?: () => void;
+  showFavorite?: boolean;
+  showDetailsLink?: boolean;
+  isAvailable?: boolean;
+  onBeforeFavoriteRemove?: () => Promise<void> | void;
+  onFavoriteToggleSettled?: (success: boolean) => void;
 };
 
 const PLACEHOLDER_IMAGE = '/assets/property-placeholder.webp';
@@ -28,6 +34,11 @@ function PropertyCard({
   onSelect,
   isAuthenticated = false,
   onRequireAuth,
+  showFavorite = true,
+  showDetailsLink = true,
+  isAvailable = true,
+  onBeforeFavoriteRemove,
+  onFavoriteToggleSettled,
 }: PropertyCardProps) {
   const [imageIndex, setImageIndex] = useState(0);
   const [imageFailed, setImageFailed] = useState(false);
@@ -92,12 +103,21 @@ function PropertyCard({
           onError={handleImageError}
           hidden={image === PLACEHOLDER_IMAGE && placeholderFailed}
         />
-        <FavoriteButton
-          propertyId={property.id}
-          isFavorite={property.isFavorite ?? false}
-          isAuthenticated={isAuthenticated}
-          onRequireAuth={onRequireAuth}
-        />
+        {!isAvailable && (
+          <div className="property-card__unavailable" aria-label="Propiedad no disponible">
+            Propiedad no disponible
+          </div>
+        )}
+        {showFavorite && (
+          <FavoriteButton
+            propertyId={property.id}
+            isFavorite={property.isFavorite ?? false}
+            isAuthenticated={isAuthenticated}
+            onRequireAuth={onRequireAuth}
+            onBeforeRemove={onBeforeFavoriteRemove}
+            onToggleSettled={onFavoriteToggleSettled}
+          />
+        )}
         {hasPriceDrop && (
           <span className="property-card__price-drop">Bajada de precio</span>
         )}
@@ -139,13 +159,15 @@ function PropertyCard({
         <h2 className="property-card__title">{property.title}</h2>
         <p className="property-card__location">{property.location}</p>
         <ul className="property-card__features" aria-label="Características">
-          <li>{property.bedrooms} hab.</li>
-          <li>{property.bathrooms} baños</li>
+          {property.bedrooms !== undefined && <li>{property.bedrooms} hab.</li>}
+          {property.bathrooms !== undefined && <li>{property.bathrooms} baños</li>}
           <li>{property.area} m²</li>
         </ul>
-        <a className="property-card__details" href={`/inmueble/${property.id}`}>
-          Ver inmueble
-        </a>
+        {showDetailsLink && (
+          <a className="property-card__details" href={`/inmueble/${property.id}`}>
+            Ver inmueble
+          </a>
+        )}
       </div>
     </article>
   );

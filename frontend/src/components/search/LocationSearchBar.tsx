@@ -12,6 +12,9 @@ export type LocationSuggestion = {
 
 type LocationSearchBarProps = {
   onLocationChange?: (location: LocationSuggestion | null) => void;
+  ariaInvalid?: boolean;
+  ariaDescribedBy?: string;
+  onBlur?: () => void;
 };
 
 type SuggestResult = {
@@ -29,7 +32,12 @@ const TYPE_LABELS: Record<LocationSuggestion['type'], string> = {
   postal_code: 'Código postal',
 };
 
-function LocationSearchBar({ onLocationChange }: LocationSearchBarProps) {
+function LocationSearchBar({
+  onLocationChange,
+  ariaInvalid,
+  ariaDescribedBy,
+  onBlur,
+}: LocationSearchBarProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [initialLocation] = useState(() => searchParams.get(LOCATION_PARAM) ?? '');
   const [query, setQuery] = useState(initialLocation);
@@ -177,10 +185,15 @@ function LocationSearchBar({ onLocationChange }: LocationSearchBarProps) {
           aria-expanded={showListbox}
           aria-controls={listboxId}
           aria-activedescendant={showListbox && currentIndex >= 0 ? optionId(currentIndex) : undefined}
+          aria-invalid={ariaInvalid}
+          aria-describedby={ariaDescribedBy}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           onFocus={() => setIsOpen(true)}
-          onBlur={() => setIsOpen(false)}
+          onBlur={() => {
+            setIsOpen(false);
+            onBlur?.();
+          }}
         />
         {query && (
           <button
