@@ -1,23 +1,16 @@
 import { useState } from 'react';
 import EmptyFavoritesState from '../components/EmptyFavoritesState';
-import PropertyCard, { type Property } from '../../components/catalog/PropertyCard';
-import useFavoriteIds from '../../components/catalog/useFavoriteIds';
-import useProperties from '../../components/catalog/useProperties';
+import PropertyCard from '../../components/catalog/PropertyCard';
+import useFavoriteProperties from '../../components/catalog/useFavoriteProperties';
 import SiteHeader from '../../components/landing/SiteHeader.jsx';
 
 function FavoritesPage() {
-  const [removingId, setRemovingId] = useState<string | null>(null);
-  const { data: favoriteIds = [], isLoading: favoritesLoading, isError: favoritesError } =
-    useFavoriteIds(true);
+  const [removingIds, setRemovingIds] = useState<string[]>([]);
   const {
-    properties,
-    isLoading: propertiesLoading,
-  } = useProperties(null, 50) as { properties: Property[]; isLoading: boolean };
-
-  const favoriteProperties = properties.filter((property) => (
-    favoriteIds.includes(String(property.id))
-  ));
-  const isLoading = favoritesLoading || propertiesLoading;
+    data: favoriteProperties = [],
+    isLoading,
+    isError: favoritesError,
+  } = useFavoriteProperties();
 
   return (
     <>
@@ -30,7 +23,7 @@ function FavoritesPage() {
         </div>
 
         {isLoading && (
-          <div className="property-grid">
+          <div className="property-grid" aria-label="Cargando favoritos">
             {[0, 1, 2].map((item) => (
               <div className="property-card property-card--skeleton" aria-hidden="true" key={item} />
             ))}
@@ -54,7 +47,7 @@ function FavoritesPage() {
               const propertyId = String(property.id);
               return (
                 <div
-                  className={`favorite-item${removingId === propertyId ? ' is-removing' : ''}`}
+                  className={`favorite-item${removingIds.includes(propertyId) ? ' is-removing' : ''}`}
                   key={propertyId}
                 >
                   <PropertyCard
@@ -63,11 +56,13 @@ function FavoritesPage() {
                     showDetailsLink={isAvailable}
                     isAvailable={isAvailable}
                     onBeforeFavoriteRemove={() => new Promise((resolve) => {
-                      setRemovingId(propertyId);
+                      setRemovingIds((prev) => [...prev, propertyId]);
                       window.setTimeout(resolve, 180);
                     })}
                     onFavoriteToggleSettled={(success) => {
-                      if (!success) setRemovingId(null);
+                      if (!success) {
+                        setRemovingIds((prev) => prev.filter((id) => id !== propertyId));
+                      }
                     }}
                   />
                 </div>
