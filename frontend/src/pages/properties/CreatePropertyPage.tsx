@@ -4,6 +4,7 @@ import SiteFooter from '../../../components/landing/SiteFooter';
 import SiteHeader from '../../../components/landing/SiteHeader';
 import LocationSearchBar, { type LocationSuggestion } from '../../components/search/LocationSearchBar';
 import { apiFetch } from '../../api/client';
+import PropertyImageManager from '../../components/property/PropertyImageManager';
 import { useAuth } from '../../context/AuthContext';
 import PropertyFormPreview from './PropertyFormPreview';
 
@@ -82,6 +83,7 @@ function CreatePropertyPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [createdId, setCreatedId] = useState<number | null>(null);
   const errors = validate(values);
   const isValid = Object.keys(errors).length === 0;
   const isPreviewable = Boolean(
@@ -161,6 +163,10 @@ function CreatePropertyPage() {
         );
       }
 
+      const created = typeof response.json === 'function'
+        ? await response.json().catch(() => null)
+        : null;
+      if (created && typeof created.id === 'number') setCreatedId(created.id);
       setSuccessMessage('Tu anuncio se ha publicado correctamente.');
     } catch (error) {
       setServerError(
@@ -388,6 +394,7 @@ function CreatePropertyPage() {
 
               {serverError && <p className="property-form__server-error" role="alert">{serverError}</p>}
               {successMessage && <p className="property-form__success" role="status">{successMessage}</p>}
+              {createdId !== null && <PropertyImageManager propertyId={createdId} />}
               <button
                 className="create-property__submit property-form__submit"
                 type="submit"
