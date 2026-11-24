@@ -30,6 +30,10 @@ CREATE_RESPONSES = {
 }
 
 
+OperationType = Literal["sale", "rent"]
+PropertyType = Literal["flat", "house", "local", "office", "garage", "storage"]
+
+
 class PropertyCreate(BaseModel):
     """Datos necesarios para publicar un anuncio inmobiliario."""
 
@@ -37,8 +41,8 @@ class PropertyCreate(BaseModel):
 
     title: Title
     location_id: int = Field(ge=1)
-    operation_type: Literal["sale", "rent"]
-    property_type: Literal["flat", "house", "local", "office", "garage", "storage"]
+    operation_type: OperationType
+    property_type: PropertyType
     description: PropertyDescription
     address: Address
     price: Price
@@ -175,10 +179,21 @@ def list_properties(
         le=2_147_483_647,
         description="Id de una sugerencia de GET /api/v1/locations/suggest",
     ),
+    operation_type: Annotated[
+        OperationType | None, Query(description="Compra (`sale`) o alquiler (`rent`)")
+    ] = None,
+    property_types: Annotated[
+        list[PropertyType] | None,
+        Query(description="Tipologías; se repite: `?property_types=flat&property_types=office`"),
+    ] = None,
 ) -> PaginatedProperties:
     query = select(Property).where(Property.is_active.is_(True))
     if location_id is not None:
         query = query.where(in_location(location_id))
+    if operation_type is not None:
+        query = query.where(Property.operation_type == operation_type)
+    if property_types:
+        query = query.where(Property.property_type.in_(set(property_types)))
 
     total = db.scalar(select(func.count()).select_from(query.subquery())) or 0
     properties = db.scalars(
